@@ -1,0 +1,590 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="346" font-family="monospace" font-size="11"><rect width="100%" height="100%" fill="#fff"/><text x="4" y="16" font-family="sans-serif" font-size="13" font-weight="bold">Сервер ПІСЛЯ (encode once + spatial hash) — busy CPU 0.98 s (idle excluded)</text>
+<g><title>processTimers timers:506 39.9%</title><rect x="0.0" y="24" width="438.6" height="17" fill="#e9a15e"/>
+<text x="3.0" y="36" clip-path="none">processTimers timers:506</text>
+</g>
+<g><title>listOnTimeout timers:526 38.9%</title><rect x="0.0" y="42" width="427.6" height="17" fill="#f3c26b"/>
+<text x="3.0" y="54" clip-path="none">listOnTimeout timers:526</text>
+</g>
+<g><title>#loop match.ts:138 36.2%</title><rect x="0.0" y="60" width="397.7" height="17" fill="#e98b5d"/>
+<text x="3.0" y="72" clip-path="none">#loop match.ts:138</text>
+</g>
+<g><title>room.match.onBroadcast ws.ts:100 24.0%</title><rect x="0.0" y="78" width="264.0" height="17" fill="#f3c26b"/>
+<text x="3.0" y="90" clip-path="none">room.match.onBroadcast ws.ts:100</text>
+</g>
+<g><title>send ws.ts:76 21.5%</title><rect x="0.0" y="96" width="236.4" height="17" fill="#e9a15e"/>
+<text x="3.0" y="108" clip-path="none">send ws.ts:76</text>
+</g>
+<g><title>send websocket.js:455 21.5%</title><rect x="0.0" y="114" width="236.4" height="17" fill="#f5a65b"/>
+<text x="3.0" y="126" clip-path="none">send websocket.js:455</text>
+</g>
+<g><title>send sender.js:351 21.4%</title><rect x="0.0" y="132" width="234.8" height="17" fill="#f5a65b"/>
+<text x="3.0" y="144" clip-path="none">send sender.js:351</text>
+</g>
+<g><title>dispatch sender.js:503 21.3%</title><rect x="0.0" y="150" width="233.6" height="17" fill="#e9a15e"/>
+<text x="3.0" y="162" clip-path="none">dispatch sender.js:503</text>
+</g>
+<g><title>sendFrame sender.js:563 21.1%</title><rect x="0.0" y="168" width="231.7" height="17" fill="#f5a65b"/>
+<text x="3.0" y="180" clip-path="none">sendFrame sender.js:563</text>
+</g>
+<g><title>Writable.uncork writable:520 20.7%</title><rect x="0.0" y="186" width="227.0" height="17" fill="#f5a65b"/>
+<text x="3.0" y="198" clip-path="none">Writable.uncork writable:520</text>
+</g>
+<g><title>clearBuffer writable:744 20.7%</title><rect x="0.0" y="204" width="227.0" height="17" fill="#f0b45a"/>
+<text x="3.0" y="216" clip-path="none">clearBuffer writable:744</text>
+</g>
+<g><title>doWrite writable:587 20.6%</title><rect x="0.0" y="222" width="225.7" height="17" fill="#f3c26b"/>
+<text x="3.0" y="234" clip-path="none">doWrite writable:587</text>
+</g>
+<g><title>Socket._writev node:net:973 20.4%</title><rect x="0.0" y="240" width="224.4" height="17" fill="#f5a65b"/>
+<text x="3.0" y="252" clip-path="none">Socket._writev node:net:973</text>
+</g>
+<g><title>Socket._writeGeneric node:net:936 20.3%</title><rect x="0.0" y="258" width="223.2" height="17" fill="#f3c26b"/>
+<text x="3.0" y="270" clip-path="none">Socket._writeGeneric node:net:936</text>
+</g>
+<g><title>writevGeneric stream_base_commons:121 20.1%</title><rect x="0.0" y="276" width="220.8" height="17" fill="#d9534f"/>
+<text x="3.0" y="288" clip-path="none">writevGeneric stream_base_commons</text>
+</g>
+<g><title>writev 19.5%</title><rect x="0.0" y="294" width="214.5" height="17" fill="#d9534f"/>
+<text x="3.0" y="306" clip-path="none">writev</text>
+</g>
+<g><title>afterWriteDispatched stream_base_commons:154 0.3%</title><rect x="215.0" y="294" width="3.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>onwrite writable:615 0.3%</title><rect x="215.0" y="312" width="3.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>Writable.write writable:504 0.3%</title><rect x="227.5" y="186" width="3.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>_write writable:453 0.3%</title><rect x="227.5" y="204" width="3.0" height="17" fill="#e98b5d"/>
+</g>
+<g><title>writeOrBuffer writable:548 0.2%</title><rect x="227.5" y="222" width="1.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>frame sender.js:79 0.2%</title><rect x="232.2" y="168" width="1.4" height="17" fill="#f5a65b"/>
+</g>
+<g><title>allocUnsafe node:buffer:411 0.2%</title><rect x="232.2" y="186" width="1.4" height="17" fill="#f0b45a"/>
+</g>
+<g><title>allocate node:buffer:436 0.2%</title><rect x="232.2" y="204" width="1.4" height="17" fill="#e98b5d"/>
+</g>
+<g><title>prepareSnapshot binary.ts:228 1.4%</title><rect x="236.9" y="96" width="15.3" height="17" fill="#f0b45a"/>
+</g>
+<g><title>encodeSnapshot binary.ts:43 1.0%</title><rect x="236.9" y="114" width="10.5" height="17" fill="#d9534f"/>
+</g>
+<g><title>(anon) binary.ts:230 0.2%</title><rect x="252.8" y="96" width="2.2" height="17" fill="#e98b5d"/>
+</g>
+<g><title>step match.ts:115 9.5%</title><rect x="264.5" y="78" width="103.5" height="17" fill="#e9a15e"/>
+<text x="267.5" y="90" clip-path="none">step match.ts:1</text>
+</g>
+<g><title>step world.ts:95 5.0%</title><rect x="264.5" y="96" width="54.5" height="17" fill="#f5a65b"/>
+<text x="267.5" y="108" clip-path="none">step wor</text>
+</g>
+<g><title>resolveCollisions collision.ts:32 1.5%</title><rect x="264.5" y="114" width="16.3" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) spatial-hash.ts:11 1.0%</title><rect x="264.5" y="132" width="10.1" height="17" fill="#f3c26b"/>
+</g>
+<g><title>update bullet.ts:21 0.9%</title><rect x="281.3" y="114" width="9.8" height="17" fill="#f3c26b"/>
+</g>
+<g><title>update entity.ts:63 0.4%</title><rect x="281.3" y="132" width="4.4" height="17" fill="#e9a15e"/>
+</g>
+<g><title>update behaviors.ts:13 0.3%</title><rect x="281.3" y="150" width="2.3" height="17" fill="#f0b45a"/>
+</g>
+<g><title>wrap entity.ts:69 0.2%</title><rect x="284.1" y="150" width="1.2" height="17" fill="#e9a15e"/>
+</g>
+<g><title>update ship.ts:98 0.8%</title><rect x="291.6" y="114" width="7.8" height="17" fill="#e98b5d"/>
+</g>
+<g><title>respawn ship.ts:151 0.5%</title><rect x="291.6" y="132" width="4.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>findSafeSpot world.ts:135 0.4%</title><rect x="291.6" y="150" width="4.1" height="17" fill="#f0b45a"/>
+</g>
+<g><title>get dead ship.ts:94 0.1%</title><rect x="297.1" y="132" width="1.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>ofKind world.ts:79 0.4%</title><rect x="299.9" y="114" width="3.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>applyInput ship.ts:111 1.6%</title><rect x="319.5" y="96" width="16.7" height="17" fill="#f3c26b"/>
+</g>
+<g><title>fire ship.ts:128 0.9%</title><rect x="319.5" y="114" width="8.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>Bullet bullet.ts:16 0.6%</title><rect x="319.5" y="132" width="6.5" height="17" fill="#f0b45a"/>
+</g>
+<g><title>Entity entity.ts:47 0.3%</title><rect x="319.5" y="150" width="2.8" height="17" fill="#f0b45a"/>
+</g>
+<g><title>Entity entity.ts:25 0.3%</title><rect x="319.5" y="168" width="2.8" height="17" fill="#f3c26b"/>
+</g>
+<g><title>stepShipState ship.ts:56 0.2%</title><rect x="329.0" y="114" width="2.1" height="17" fill="#e9a15e"/>
+</g>
+<g><title>worldToSnapshot snapshot.ts:29 0.6%</title><rect x="336.7" y="96" width="6.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>setTimeout node:timers:133 1.5%</title><rect x="368.5" y="78" width="15.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>insert timers:367 0.7%</title><rect x="368.5" y="96" width="7.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>insert priority_queue:22 0.2%</title><rect x="368.5" y="114" width="2.1" height="17" fill="#f3c26b"/>
+</g>
+<g><title>Timeout timers:174 0.2%</title><rect x="376.2" y="96" width="2.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>push match.ts:26 0.5%</title><rect x="384.7" y="78" width="4.5" height="17" fill="#e9a15e"/>
+</g>
+<g><title>remove linkedlist:16 0.3%</title><rect x="398.2" y="60" width="3.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>shift priority_queue:109 0.2%</title><rect x="401.9" y="60" width="2.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>removeAt priority_queue:94 0.2%</title><rect x="401.9" y="78" width="2.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>emitBeforeScript async_hooks:517 0.2%</title><rect x="404.4" y="60" width="2.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>onStreamRead stream_base_commons:166 19.5%</title><rect x="439.1" y="24" width="214.4" height="17" fill="#f0b45a"/>
+<text x="442.1" y="36" clip-path="none">onStreamRead stream_base_commons</text>
+</g>
+<g><title>Readable.push readable:387 16.2%</title><rect x="439.1" y="42" width="177.3" height="17" fill="#f0b45a"/>
+<text x="442.1" y="54" clip-path="none">Readable.push readable:387</text>
+</g>
+<g><title>readableAddChunkPushByteMode readable:463 15.8%</title><rect x="439.1" y="60" width="173.8" height="17" fill="#f3c26b"/>
+<text x="442.1" y="72" clip-path="none">readableAddChunkPushByteMo</text>
+</g>
+<g><title>addChunk readable:550 15.5%</title><rect x="439.1" y="78" width="170.3" height="17" fill="#f0b45a"/>
+<text x="442.1" y="90" clip-path="none">addChunk readable:550</text>
+</g>
+<g><title>emit node:events:466 13.9%</title><rect x="439.1" y="96" width="152.1" height="17" fill="#f5a65b"/>
+<text x="442.1" y="108" clip-path="none">emit node:events:466</text>
+</g>
+<g><title>socketOnData websocket.js:1373 13.9%</title><rect x="439.1" y="114" width="152.1" height="17" fill="#e9a15e"/>
+<text x="442.1" y="126" clip-path="none">socketOnData websocket.</text>
+</g>
+<g><title>Writable.write writable:504 13.8%</title><rect x="439.1" y="132" width="150.9" height="17" fill="#f3c26b"/>
+<text x="442.1" y="144" clip-path="none">Writable.write writabl</text>
+</g>
+<g><title>_write writable:453 13.6%</title><rect x="439.1" y="150" width="149.3" height="17" fill="#e98b5d"/>
+<text x="442.1" y="162" clip-path="none">_write writable:453</text>
+</g>
+<g><title>writeOrBuffer writable:548 13.5%</title><rect x="439.1" y="168" width="148.1" height="17" fill="#e9a15e"/>
+<text x="442.1" y="180" clip-path="none">writeOrBuffer writable</text>
+</g>
+<g><title>_write receiver.js:96 13.5%</title><rect x="439.1" y="186" width="148.1" height="17" fill="#f0b45a"/>
+<text x="442.1" y="198" clip-path="none">_write receiver.js:96</text>
+</g>
+<g><title>startLoop receiver.js:172 13.0%</title><rect x="439.1" y="204" width="142.0" height="17" fill="#e98b5d"/>
+<text x="442.1" y="216" clip-path="none">startLoop receiver.js</text>
+</g>
+<g><title>getData receiver.js:480 11.1%</title><rect x="439.1" y="222" width="121.8" height="17" fill="#e9a15e"/>
+<text x="442.1" y="234" clip-path="none">getData receiver.j</text>
+</g>
+<g><title>dataMessage receiver.js:577 10.4%</title><rect x="439.1" y="240" width="113.7" height="17" fill="#f5a65b"/>
+<text x="442.1" y="252" clip-path="none">dataMessage recei</text>
+</g>
+<g><title>emit node:events:466 10.2%</title><rect x="439.1" y="258" width="111.8" height="17" fill="#f5a65b"/>
+<text x="442.1" y="270" clip-path="none">emit node:events:</text>
+</g>
+<g><title>receiverOnMessage websocket.js:1238 9.9%</title><rect x="439.1" y="276" width="108.6" height="17" fill="#e9a15e"/>
+<text x="442.1" y="288" clip-path="none">receiverOnMessag</text>
+</g>
+<g><title>emit node:events:466 9.4%</title><rect x="439.1" y="294" width="102.5" height="17" fill="#f5a65b"/>
+<text x="442.1" y="306" clip-path="none">emit node:event</text>
+</g>
+<g><title>(anon) ws.ts:176 8.9%</title><rect x="439.1" y="312" width="97.6" height="17" fill="#f3c26b"/>
+<text x="442.1" y="324" clip-path="none">(anon) ws.ts:1</text>
+</g>
+<g><title>consume receiver.js:127 0.3%</title><rect x="553.3" y="240" width="3.2" height="17" fill="#e9a15e"/>
+</g>
+<g><title>getInfo receiver.js:208 0.8%</title><rect x="561.3" y="222" width="8.1" height="17" fill="#f5a65b"/>
+</g>
+<g><title>consume receiver.js:127 0.2%</title><rect x="561.3" y="240" width="2.0" height="17" fill="#e9a15e"/>
+</g>
+<g><title>getMask receiver.js:464 0.2%</title><rect x="569.9" y="222" width="2.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>maybeReadMore readable:857 1.3%</title><rect x="591.7" y="96" width="13.8" height="17" fill="#e98b5d"/>
+</g>
+<g><title>nextTick task_queues:111 1.2%</title><rect x="591.7" y="114" width="12.5" height="17" fill="#f3c26b"/>
+</g>
+<g><title>onEofChunk readable:788 0.3%</title><rect x="609.9" y="78" width="3.0" height="17" fill="#e9a15e"/>
+</g>
+<g><title>getModuleJobForImport loader:319 15.4%</title><rect x="654.0" y="24" width="168.6" height="17" fill="#f0b45a"/>
+<text x="657.0" y="36" clip-path="none">getModuleJobForImport loa</text>
+</g>
+<g><title>#getJobFromResolveResult loader:347 15.4%</title><rect x="654.0" y="42" width="168.6" height="17" fill="#e98b5d"/>
+<text x="657.0" y="54" clip-path="none">#getJobFromResolveResult </text>
+</g>
+<g><title>#createModuleJob loader:632 15.4%</title><rect x="654.0" y="60" width="168.6" height="17" fill="#e98b5d"/>
+<text x="657.0" y="72" clip-path="none">#createModuleJob loader:6</text>
+</g>
+<g><title>loadAndTranslate loader:608 15.0%</title><rect x="654.0" y="78" width="164.9" height="17" fill="#f0b45a"/>
+<text x="657.0" y="90" clip-path="none">loadAndTranslate loader:6</text>
+</g>
+<g><title>afterLoad loader:610 14.6%</title><rect x="654.0" y="96" width="160.2" height="17" fill="#e9a15e"/>
+<text x="657.0" y="108" clip-path="none">afterLoad loader:610</text>
+</g>
+<g><title>#translate loader:550 14.6%</title><rect x="654.0" y="114" width="160.2" height="17" fill="#f0b45a"/>
+<text x="657.0" y="126" clip-path="none">#translate loader:550</text>
+</g>
+<g><title>(anon) translators:656 9.5%</title><rect x="654.0" y="132" width="104.2" height="17" fill="#f3c26b"/>
+<text x="657.0" y="144" clip-path="none">(anon) translat</text>
+</g>
+<g><title>stripTypeScriptModuleTypes typescript:153 8.0%</title><rect x="654.0" y="150" width="87.5" height="17" fill="#e98b5d"/>
+<text x="657.0" y="162" clip-path="none">stripTypeScri</text>
+</g>
+<g><title>processTypeScriptCode typescript:132 8.0%</title><rect x="654.0" y="168" width="87.5" height="17" fill="#e9a15e"/>
+<text x="657.0" y="180" clip-path="none">processTypeSc</text>
+</g>
+<g><title>parseTypeScript typescript:52 8.0%</title><rect x="654.0" y="186" width="87.5" height="17" fill="#f3c26b"/>
+<text x="657.0" y="198" clip-path="none">parseTypeScri</text>
+</g>
+<g><title>transformSync index:576 6.0%</title><rect x="654.0" y="204" width="65.1" height="17" fill="#e9a15e"/>
+<text x="657.0" y="216" clip-path="none">transform</text>
+</g>
+<g><title>module2.exports.transformSync index:229 6.0%</title><rect x="654.0" y="222" width="65.1" height="17" fill="#f3c26b"/>
+<text x="657.0" y="234" clip-path="none">module2.e</text>
+</g>
+<g><title>js-to-wasm 6.0%</title><rect x="654.0" y="240" width="65.1" height="17" fill="#f5a65b"/>
+<text x="657.0" y="252" clip-path="none">js-to-was</text>
+</g>
+<g><title>wasm-function[2565] 0098dfc6:1 6.0%</title><rect x="654.0" y="258" width="65.1" height="17" fill="#f0b45a"/>
+<text x="657.0" y="270" clip-path="none">wasm-func</text>
+</g>
+<g><title>wasm-function[91] 0098dfc6:1 6.0%</title><rect x="654.0" y="276" width="65.1" height="17" fill="#f5a65b"/>
+<text x="657.0" y="288" clip-path="none">wasm-func</text>
+</g>
+<g><title>wasm-function[63] 0098dfc6:1 5.3%</title><rect x="654.0" y="294" width="57.8" height="17" fill="#e98b5d"/>
+<text x="657.0" y="306" clip-path="none">wasm-fun</text>
+</g>
+<g><title>wasm-function[992] 0098dfc6:1 2.9%</title><rect x="654.0" y="312" width="31.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>wasm-function[3554] 0098dfc6:1 0.9%</title><rect x="685.7" y="312" width="9.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>wasm-function[1335] 0098dfc6:1 0.8%</title><rect x="695.8" y="312" width="8.5" height="17" fill="#e98b5d"/>
+</g>
+<g><title>wasm-function[649] 0098dfc6:1 0.2%</title><rect x="712.3" y="294" width="1.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>wasm-function[382] 0098dfc6:1 0.2%</title><rect x="712.3" y="312" width="1.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) util:794 2.0%</title><rect x="719.6" y="204" width="21.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) typescript:40 2.0%</title><rect x="719.6" y="222" width="21.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>requireBuiltin realm:422 2.0%</title><rect x="719.6" y="240" width="21.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForInternalLoader realm:385 2.0%</title><rect x="719.6" y="258" width="21.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) index:1 1.9%</title><rect x="719.6" y="276" width="20.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>__require index:8 1.9%</title><rect x="719.6" y="294" width="20.7" height="17" fill="#e98b5d"/>
+</g>
+<g><title>lib/wasm.js index:35 0.7%</title><rect x="719.6" y="312" width="7.3" height="17" fill="#e98b5d"/>
+</g>
+<g><title>moduleStrategy translators:102 1.5%</title><rect x="742.0" y="150" width="16.1" height="17" fill="#e9a15e"/>
+</g>
+<g><title>compileSourceTextModule utils:344 1.5%</title><rect x="742.0" y="168" width="16.1" height="17" fill="#f0b45a"/>
+</g>
+<g><title>builtinStrategy translators:455 2.7%</title><rect x="758.6" y="132" width="28.8" height="17" fill="#f3c26b"/>
+</g>
+<g><title>getESMFacade realm:348 2.1%</title><rect x="758.6" y="150" width="22.7" height="17" fill="#e98b5d"/>
+</g>
+<g><title>evaluate 2.1%</title><rect x="758.6" y="168" width="22.7" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) realm:358 2.1%</title><rect x="758.6" y="186" width="22.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>syncExports realm:373 2.1%</title><rect x="758.6" y="204" width="22.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>getOwn realm:205 2.1%</title><rect x="758.6" y="222" width="22.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>get node:http:177 2.1%</title><rect x="758.6" y="240" width="22.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>lazyUndici node:http:122 2.1%</title><rect x="758.6" y="258" width="22.7" height="17" fill="#f0b45a"/>
+</g>
+<g><title>requireBuiltin realm:422 2.1%</title><rect x="758.6" y="276" width="22.7" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForInternalLoader realm:385 2.1%</title><rect x="758.6" y="294" width="22.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) undici:1 2.0%</title><rect x="758.6" y="312" width="21.5" height="17" fill="#e98b5d"/>
+</g>
+<g><title>loadBuiltinModule helpers:113 0.6%</title><rect x="781.9" y="150" width="5.6" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForPublicLoader realm:332 0.6%</title><rect x="781.9" y="168" width="5.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>compileForInternalLoader realm:385 0.6%</title><rect x="781.9" y="186" width="5.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) node:http:1 0.6%</title><rect x="781.9" y="204" width="5.6" height="17" fill="#f5a65b"/>
+</g>
+<g><title>requireBuiltin realm:422 0.6%</title><rect x="781.9" y="222" width="5.6" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForInternalLoader realm:385 0.6%</title><rect x="781.9" y="240" width="5.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) node:_http_agent:1 0.4%</title><rect x="781.9" y="258" width="4.4" height="17" fill="#e9a15e"/>
+</g>
+<g><title>requireBuiltin realm:422 0.4%</title><rect x="781.9" y="276" width="4.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForInternalLoader realm:385 0.4%</title><rect x="781.9" y="294" width="4.4" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) node:net:1 0.4%</title><rect x="781.9" y="312" width="4.4" height="17" fill="#e9a15e"/>
+</g>
+<g><title>commonjsStrategy translators:340 1.8%</title><rect x="788.0" y="132" width="18.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>createCJSModuleWrap translators:212 1.8%</title><rect x="788.0" y="150" width="18.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>cjsPreparseModuleExports translators:397 1.8%</title><rect x="788.0" y="168" width="18.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>parseCJS lexer:40 1.3%</title><rect x="788.0" y="186" width="13.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>parseSource lexer:85 0.9%</title><rect x="788.0" y="204" width="9.8" height="17" fill="#f3c26b"/>
+</g>
+<g><title>cjsEmplaceModuleCacheEntry translators:375 0.5%</title><rect x="802.1" y="186" width="4.7" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) loader:856 0.5%</title><rect x="802.1" y="204" width="4.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>moduleStrategy translators:102 0.7%</title><rect x="807.3" y="132" width="6.8" height="17" fill="#e9a15e"/>
+</g>
+<g><title>compileSourceTextModule utils:344 0.7%</title><rect x="807.3" y="150" width="6.8" height="17" fill="#f0b45a"/>
+</g>
+<g><title>load loader:821 0.4%</title><rect x="814.6" y="96" width="4.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>defaultLoadSync load:140 0.4%</title><rect x="814.6" y="114" width="4.3" height="17" fill="#f5a65b"/>
+</g>
+<g><title>defaultGetFormat get_format:240 0.2%</title><rect x="814.6" y="132" width="2.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>getFileProtocolModuleFormat get_format:111 0.2%</title><rect x="814.6" y="150" width="2.0" height="17" fill="#e98b5d"/>
+</g>
+<g><title>(garbage collector) 8.4%</title><rect x="823.1" y="24" width="91.6" height="17" fill="#e98b5d"/>
+<text x="826.1" y="36" clip-path="none">(garbage coll</text>
+</g>
+<g><title>nextAsync from:179 5.2%</title><rect x="915.2" y="24" width="57.2" height="17" fill="#f3c26b"/>
+<text x="918.2" y="36" clip-path="none">nextAsyn</text>
+</g>
+<g><title>Readable.push readable:387 5.1%</title><rect x="915.2" y="42" width="55.9" height="17" fill="#f0b45a"/>
+<text x="918.2" y="54" clip-path="none">Readable</text>
+</g>
+<g><title>readableAddChunkPushObjectMode readable:516 5.1%</title><rect x="915.2" y="60" width="55.9" height="17" fill="#e9a15e"/>
+<text x="918.2" y="72" clip-path="none">readable</text>
+</g>
+<g><title>addChunk readable:550 4.6%</title><rect x="915.2" y="78" width="49.8" height="17" fill="#f0b45a"/>
+<text x="918.2" y="90" clip-path="none">addChun</text>
+</g>
+<g><title>emit node:events:466 4.5%</title><rect x="915.2" y="96" width="48.6" height="17" fill="#f5a65b"/>
+<text x="918.2" y="108" clip-path="none">emit no</text>
+</g>
+<g><title>ondata readable:1007 4.5%</title><rect x="915.2" y="114" width="48.6" height="17" fill="#e98b5d"/>
+<text x="918.2" y="126" clip-path="none">ondata </text>
+</g>
+<g><title>Writable.write writable:504 4.3%</title><rect x="915.2" y="132" width="47.3" height="17" fill="#f3c26b"/>
+<text x="918.2" y="144" clip-path="none">Writabl</text>
+</g>
+<g><title>_write writable:453 4.3%</title><rect x="915.2" y="150" width="47.3" height="17" fill="#e98b5d"/>
+<text x="918.2" y="162" clip-path="none">_write </text>
+</g>
+<g><title>writeOrBuffer writable:548 4.3%</title><rect x="915.2" y="168" width="47.3" height="17" fill="#e9a15e"/>
+<text x="918.2" y="180" clip-path="none">writeOr</text>
+</g>
+<g><title>Transform._write transform:166 4.3%</title><rect x="915.2" y="186" width="47.3" height="17" fill="#e98b5d"/>
+<text x="918.2" y="198" clip-path="none">Transfo</text>
+</g>
+<g><title>transform matchlog.ts:13 4.3%</title><rect x="915.2" y="204" width="47.3" height="17" fill="#f0b45a"/>
+<text x="918.2" y="216" clip-path="none">transfo</text>
+</g>
+<g><title>(anon) transform:171 3.4%</title><rect x="915.2" y="222" width="37.4" height="17" fill="#e98b5d"/>
+</g>
+<g><title>Readable.push readable:387 3.3%</title><rect x="915.2" y="240" width="36.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>readableAddChunkPushByteMode readable:463 3.3%</title><rect x="915.2" y="258" width="36.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>addChunk readable:550 2.7%</title><rect x="915.2" y="276" width="28.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>emit node:events:466 2.7%</title><rect x="915.2" y="294" width="28.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>ondata readable:1007 2.7%</title><rect x="915.2" y="312" width="28.9" height="17" fill="#e98b5d"/>
+</g>
+<g><title>from node:buffer:301 0.7%</title><rect x="944.6" y="276" width="6.8" height="17" fill="#f5a65b"/>
+</g>
+<g><title>fromString node:buffer:484 0.5%</title><rect x="944.6" y="294" width="5.5" height="17" fill="#f0b45a"/>
+</g>
+<g><title>fromStringFast node:buffer:451 0.4%</title><rect x="944.6" y="312" width="4.3" height="17" fill="#f0b45a"/>
+</g>
+<g><title>processTicksAndRejections task_queues:71 3.9%</title><rect x="972.9" y="24" width="42.3" height="17" fill="#e9a15e"/>
+<text x="975.9" y="36" clip-path="none">proces</text>
+</g>
+<g><title>maybeReadMore_ readable:864 1.0%</title><rect x="972.9" y="42" width="10.5" height="17" fill="#f0b45a"/>
+</g>
+<g><title>Socket.read node:net:781 0.9%</title><rect x="972.9" y="60" width="9.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>Readable.read readable:647 0.7%</title><rect x="972.9" y="78" width="6.8" height="17" fill="#e98b5d"/>
+</g>
+<g><title>Socket._read node:net:721 0.3%</title><rect x="972.9" y="96" width="3.2" height="17" fill="#e98b5d"/>
+</g>
+<g><title>(anon) node:net:2197 0.9%</title><rect x="983.8" y="42" width="8.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>filterOnlyValidAddress node:net:2180 0.6%</title><rect x="983.8" y="60" width="6.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>isIpv6LinkLocal node:net:2163 0.6%</title><rect x="983.8" y="78" width="6.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>isIPv6 net:40 0.6%</title><rect x="983.8" y="96" width="6.4" height="17" fill="#e98b5d"/>
+</g>
+<g><title>listenInCluster node:net:1988 0.2%</title><rect x="990.8" y="60" width="2.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>requireBuiltin realm:422 0.2%</title><rect x="990.8" y="78" width="2.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForInternalLoader realm:385 0.2%</title><rect x="990.8" y="96" width="2.0" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) node:cluster:1 0.2%</title><rect x="990.8" y="114" width="2.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>requireBuiltin realm:422 0.2%</title><rect x="990.8" y="132" width="2.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>compileForInternalLoader realm:385 0.2%</title><rect x="990.8" y="150" width="2.0" height="17" fill="#e9a15e"/>
+</g>
+<g><title>processPromiseRejections promises:439 0.6%</title><rect x="993.2" y="42" width="6.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>runMicrotasks 0.4%</title><rect x="1000.1" y="42" width="3.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) matchlog.ts:37 0.2%</title><rect x="1000.1" y="60" width="1.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>parserOnHeadersComplete node:_http_common:77 1.9%</title><rect x="1015.7" y="24" width="20.1" height="17" fill="#f0b45a"/>
+</g>
+<g><title>parserOnIncoming node:_http_server:1073 1.0%</title><rect x="1015.7" y="42" width="10.3" height="17" fill="#e9a15e"/>
+</g>
+<g><title>emit node:events:466 0.5%</title><rect x="1015.7" y="60" width="5.1" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) index.ts:150 0.5%</title><rect x="1015.7" y="78" width="5.1" height="17" fill="#e98b5d"/>
+</g>
+<g><title>handle index.ts:75 0.4%</title><rect x="1015.7" y="96" width="3.7" height="17" fill="#f3c26b"/>
+</g>
+<g><title>json index.ts:55 0.3%</title><rect x="1015.7" y="114" width="2.5" height="17" fill="#f3c26b"/>
+</g>
+<g><title>end node:_http_outgoing:1087 0.2%</title><rect x="1015.7" y="132" width="1.3" height="17" fill="#e98b5d"/>
+</g>
+<g><title>IncomingMessage node:_http_incoming:50 0.8%</title><rect x="1026.5" y="42" width="8.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>Readable readable:320 0.2%</title><rect x="1026.5" y="60" width="1.2" height="17" fill="#e98b5d"/>
+</g>
+<g><title>Stream legacy:11 0.2%</title><rect x="1026.5" y="78" width="1.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>EventEmitter node:events:220 0.2%</title><rect x="1026.5" y="96" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) node:events:342 0.2%</title><rect x="1026.5" y="114" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>run module_job:332 1.8%</title><rect x="1036.3" y="24" width="19.1" height="17" fill="#e9a15e"/>
+</g>
+<g><title>evaluate 1.8%</title><rect x="1036.3" y="42" width="19.1" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) index.ts:1 0.8%</title><rect x="1036.3" y="60" width="8.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>create rooms.ts:139 0.3%</title><rect x="1036.3" y="78" width="2.6" height="17" fill="#e98b5d"/>
+</g>
+<g><title>emit node:events:466 0.3%</title><rect x="1036.3" y="96" width="2.6" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) index.ts:38 0.2%</title><rect x="1036.3" y="114" width="1.3" height="17" fill="#f5a65b"/>
+</g>
+<g><title>startMatchLog matchlog.ts:32 0.2%</title><rect x="1036.3" y="132" width="1.3" height="17" fill="#f0b45a"/>
+</g>
+<g><title>mkdir promises:847 0.2%</title><rect x="1036.3" y="150" width="1.3" height="17" fill="#e9a15e"/>
+</g>
+<g><title>mkdir 0.2%</title><rect x="1036.3" y="168" width="1.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) config.ts:1 0.6%</title><rect x="1045.5" y="60" width="5.7" height="17" fill="#e9a15e"/>
+</g>
+<g><title>int config.ts:7 0.6%</title><rect x="1045.5" y="78" width="5.7" height="17" fill="#e98b5d"/>
+</g>
+<g><title>(anon) translators:231 0.2%</title><rect x="1051.7" y="60" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>loadCJSModuleWithModuleLoad translators:331 0.2%</title><rect x="1051.7" y="78" width="1.2" height="17" fill="#e9a15e"/>
+</g>
+<g><title>wrapModuleLoad loader:237 0.2%</title><rect x="1051.7" y="96" width="1.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) loader:1193 0.2%</title><rect x="1051.7" y="114" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) loader:1490 0.2%</title><rect x="1051.7" y="132" width="1.2" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) loader:1878 0.2%</title><rect x="1051.7" y="150" width="1.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) loader:1731 0.2%</title><rect x="1051.7" y="168" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) stream.js:1 0.2%</title><rect x="1051.7" y="186" width="1.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>require helpers:146 0.2%</title><rect x="1051.7" y="204" width="1.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) loader:1519 0.2%</title><rect x="1051.7" y="222" width="1.2" height="17" fill="#e98b5d"/>
+</g>
+<g><title>wrapModuleLoad loader:237 0.2%</title><rect x="1051.7" y="240" width="1.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) loader:1193 0.2%</title><rect x="1051.7" y="258" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) loader:1490 0.2%</title><rect x="1051.7" y="276" width="1.2" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) loader:1878 0.2%</title><rect x="1051.7" y="294" width="1.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) loader:1731 0.2%</title><rect x="1051.7" y="312" width="1.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>_link module_job:161 0.8%</title><rect x="1055.9" y="24" width="7.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>getModuleJobForImport loader:319 0.8%</title><rect x="1055.9" y="42" width="7.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>resolve loader:715 0.8%</title><rect x="1055.9" y="60" width="7.9" height="17" fill="#e98b5d"/>
+</g>
+<g><title>#cachedDefaultResolve loader:739 0.8%</title><rect x="1055.9" y="78" width="7.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>defaultResolve resolve:944 0.8%</title><rect x="1055.9" y="96" width="7.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>moduleResolve resolve:831 0.5%</title><rect x="1055.9" y="114" width="5.5" height="17" fill="#e9a15e"/>
+</g>
+<g><title>finalizeResolution resolve:229 0.3%</title><rect x="1055.9" y="132" width="3.0" height="17" fill="#f0b45a"/>
+</g>
+<g><title>packageResolve resolve:766 0.2%</title><rect x="1059.5" y="132" width="1.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>packageExportsResolve resolve:591 0.2%</title><rect x="1059.5" y="150" width="1.9" height="17" fill="#e98b5d"/>
+</g>
+<g><title>resolvePackageTarget resolve:485 0.2%</title><rect x="1059.5" y="168" width="1.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>startMatchLog matchlog.ts:32 0.6%</title><rect x="1064.4" y="24" width="5.6" height="17" fill="#f0b45a"/>
+</g>
+<g><title>pipeline promises:19 0.4%</title><rect x="1064.4" y="42" width="4.4" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) promises:20 0.4%</title><rect x="1064.4" y="60" width="4.4" height="17" fill="#e9a15e"/>
+</g>
+<g><title>pipelineImpl pipeline:184 0.3%</title><rect x="1064.4" y="78" width="3.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>destroyer pipeline:49 0.2%</title><rect x="1064.4" y="96" width="1.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>eos end-of-stream:65 0.2%</title><rect x="1064.4" y="114" width="1.9" height="17" fill="#e98b5d"/>
+</g>
+<g><title>onconnection node:net:2236 0.5%</title><rect x="1070.5" y="24" width="5.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>Socket node:net:363 0.4%</title><rect x="1070.5" y="42" width="3.8" height="17" fill="#f5a65b"/>
+</g>
+<g><title>Duplex duplex:64 0.3%</title><rect x="1070.5" y="60" width="2.5" height="17" fill="#e9a15e"/>
+</g>
+<g><title>WritableState writable:304 0.3%</title><rect x="1070.5" y="78" width="2.5" height="17" fill="#f3c26b"/>
+</g>
+<g><title>getHighWaterMark state:33 0.3%</title><rect x="1070.5" y="96" width="2.5" height="17" fill="#e98b5d"/>
+</g>
+<g><title>onParserExecute node:_http_server:874 0.4%</title><rect x="1076.0" y="24" width="4.3" height="17" fill="#f5a65b"/>
+</g>
+<g><title>onParserExecuteCommon node:_http_server:947 0.4%</title><rect x="1076.0" y="42" width="4.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>emit node:events:466 0.4%</title><rect x="1076.0" y="60" width="4.3" height="17" fill="#f5a65b"/>
+</g>
+<g><title>upgrade websocket-server.js:128 0.4%</title><rect x="1076.0" y="78" width="4.3" height="17" fill="#f0b45a"/>
+</g>
+<g><title>handleUpgrade websocket-server.js:244 0.4%</title><rect x="1076.0" y="96" width="4.3" height="17" fill="#f5a65b"/>
+</g>
+<g><title>completeUpgrade websocket-server.js:372 0.4%</title><rect x="1076.0" y="114" width="4.3" height="17" fill="#e9a15e"/>
+</g>
+<g><title>emit node:events:466 0.2%</title><rect x="1076.0" y="132" width="1.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) ws.ts:161 0.2%</title><rect x="1076.0" y="150" width="1.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>setTimeout node:timers:133 0.2%</title><rect x="1076.0" y="168" width="1.9" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) node:net:345 0.4%</title><rect x="1080.8" y="24" width="3.6" height="17" fill="#f5a65b"/>
+</g>
+<g><title>emit node:events:466 0.4%</title><rect x="1080.8" y="42" width="3.6" height="17" fill="#f5a65b"/>
+</g>
+<g><title>socketOnClose websocket.js:1321 0.4%</title><rect x="1080.8" y="60" width="3.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>emitClose websocket.js:266 0.2%</title><rect x="1080.8" y="78" width="1.4" height="17" fill="#f0b45a"/>
+</g>
+<g><title>emit node:events:466 0.2%</title><rect x="1080.8" y="96" width="1.4" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) ws.ts:200 0.2%</title><rect x="1080.8" y="114" width="1.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>wrapper node:fs:807 0.4%</title><rect x="1084.9" y="24" width="3.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) streams:423 0.2%</title><rect x="1084.9" y="42" width="1.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) matchlog.ts:37 0.3%</title><rect x="1089.0" y="24" width="2.7" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(anon) run_main_module:1 0.2%</title><rect x="1092.3" y="24" width="2.1" height="17" fill="#e9a15e"/>
+</g>
+<g><title>executeUserEntryPoint run_main:157 0.2%</title><rect x="1092.3" y="42" width="2.1" height="17" fill="#f5a65b"/>
+</g>
+</svg>

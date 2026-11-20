@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { PROTOCOL_VERSION, SnapshotSchema, ClientMessageSchema, type Snapshot, type InputMsg } from '../protocol.ts'
 import { CodecError } from './errors.ts'
 import type { Codec, Wire } from './types.ts'
+import type { WorldSnapshot } from '../net/snapshot.ts'
+import type { Seq } from '../types.ts'
 
 const SnapshotMessage = SnapshotSchema.extend({ v: z.literal(PROTOCOL_VERSION), type: z.literal('snapshot') })
 
@@ -19,6 +21,11 @@ export const jsonCodec: Codec = {
   name: 'json',
   encodeSnapshot(snap: Snapshot): string {
     return JSON.stringify({ v: PROTOCOL_VERSION, type: 'snapshot', ...snap })
+  },
+  prepareSnapshot(snap: WorldSnapshot) {
+    // {"v":1,"type":"snapshot","ack":N, + the rest serialized once
+    const rest = JSON.stringify({ tick: snap.tick, entities: snap.entities, events: snap.events }).slice(1)
+    return (ack: Seq) => `{"v":${PROTOCOL_VERSION},"type":"snapshot","ack":${ack},${rest}`
   },
   decodeSnapshot(data: Wire): Snapshot {
     const r = SnapshotMessage.safeParse(parse(data))

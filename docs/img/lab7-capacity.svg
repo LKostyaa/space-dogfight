@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="340" font-family="sans-serif" font-size="12"><rect width="100%" height="100%" fill="#fff"/>
+<text x="60" y="20" font-weight="bold">Один процес сервера: гравці (8 на кімнату) → навантаження</text>
+<line x1="60" x2="660" y1="280.0" y2="280.0" stroke="#eee"/><text x="54" y="284.0" text-anchor="end" fill="#2b7bd6">0%</text>
+<line x1="60" x2="660" y1="232.0" y2="232.0" stroke="#eee"/><text x="54" y="236.0" text-anchor="end" fill="#2b7bd6">20%</text>
+<line x1="60" x2="660" y1="184.0" y2="184.0" stroke="#eee"/><text x="54" y="188.0" text-anchor="end" fill="#2b7bd6">40%</text>
+<line x1="60" x2="660" y1="136.0" y2="136.0" stroke="#eee"/><text x="54" y="140.0" text-anchor="end" fill="#2b7bd6">60%</text>
+<line x1="60" x2="660" y1="88.0" y2="88.0" stroke="#eee"/><text x="54" y="92.0" text-anchor="end" fill="#2b7bd6">80%</text>
+<line x1="60" x2="660" y1="40.0" y2="40.0" stroke="#eee"/><text x="54" y="44.0" text-anchor="end" fill="#2b7bd6">100%</text>
+<text x="666" y="284.0" fill="#d9534f">0 MB/s</text>
+<text x="666" y="236.0" fill="#d9534f">1 MB/s</text>
+<text x="666" y="188.0" fill="#d9534f">2 MB/s</text>
+<text x="666" y="140.0" fill="#d9534f">3 MB/s</text>
+<text x="666" y="92.0" fill="#d9534f">4 MB/s</text>
+<text x="666" y="44.0" fill="#d9534f">5 MB/s</text>
+<text x="60.0" y="298" text-anchor="middle">0</text>
+<text x="175.4" y="298" text-anchor="middle">50</text>
+<text x="290.8" y="298" text-anchor="middle">100</text>
+<text x="406.2" y="298" text-anchor="middle">150</text>
+<text x="521.5" y="298" text-anchor="middle">200</text>
+<text x="636.9" y="298" text-anchor="middle">250</text>
+<text x="360.0" y="316" text-anchor="middle">гравців на процес (N)</text>
+<line x1="646.2" x2="646.2" y1="40.0" y2="280" stroke="#999" stroke-dasharray="4 3"/><text x="642.2" y="52.0" text-anchor="end" fill="#666">ліміт id (1 байт): 254</text>
+<polyline points="78.5,274.7 133.8,271.1 207.7,266.8 355.4,253.8 503.1,244.5 632.3,238.7" fill="none" stroke="#2b7bd6" stroke-width="2.5"/>
+<polyline points="78.5,274.1 133.8,257.3 207.7,233.7 355.4,188.1 503.1,143.6 632.3,102.5" fill="none" stroke="#d9534f" stroke-width="2.5"/>
+<circle cx="78.5" cy="274.7" r="3.5" fill="#2b7bd6"/><circle cx="78.5" cy="274.1" r="3.5" fill="#d9534f"/>
+<circle cx="133.8" cy="271.1" r="3.5" fill="#2b7bd6"/><circle cx="133.8" cy="257.3" r="3.5" fill="#d9534f"/>
+<circle cx="207.7" cy="266.8" r="3.5" fill="#2b7bd6"/><circle cx="207.7" cy="233.7" r="3.5" fill="#d9534f"/>
+<circle cx="355.4" cy="253.8" r="3.5" fill="#2b7bd6"/><circle cx="355.4" cy="188.1" r="3.5" fill="#d9534f"/>
+<circle cx="503.1" cy="244.5" r="3.5" fill="#2b7bd6"/><circle cx="503.1" cy="143.6" r="3.5" fill="#d9534f"/>
+<circle cx="632.3" cy="238.7" r="3.5" fill="#2b7bd6"/><circle cx="632.3" cy="102.5" r="3.5" fill="#d9534f"/>
+<text x="70" y="52.0" fill="#2b7bd6">● зайнятість циклу подій (ELU)</text><text x="70" y="71.2" fill="#d9534f">● вихідний трафік, MB/s</text>
+</svg>

@@ -2,10 +2,11 @@ import type { WebSocket } from 'ws'
 import { World } from '@dogfight/shared/sim/world.ts'
 import { Ship, NO_CONTROLS, type Controls } from '@dogfight/shared/sim/ship.ts'
 import { TICK_RATE, DT } from '@dogfight/shared/sim/constants.ts'
-import { bitsToControls, type CodecName, type InputMsg, type Snapshot } from '@dogfight/shared/protocol.ts'
+import { bitsToControls, type CodecName, type InputMsg } from '@dogfight/shared/protocol.ts'
 import { worldToSnapshot, type WorldSnapshot } from '@dogfight/shared/net/snapshot.ts'
 import { toId, type PlayerId, type Seq } from '@dogfight/shared/types.ts'
 import type { Room } from './rooms.ts'
+import type { PlayerInput } from './bot.ts'
 
 const TICK_MS = 1000 / TICK_RATE
 const MAX_QUEUE = 8
@@ -46,10 +47,12 @@ export interface MatchPlayer {
   readonly queue: { seq: Seq; controls: Controls }[]
   lastSeq: Seq
   controls: Controls
-  readonly isBot: boolean
+  /** null for humans (inputs arrive over the network), a Bot for AI players */
+  readonly ai: PlayerInput | null
 }
 
-export type SendSnapshot = (player: MatchPlayer, snapshot: Snapshot) => void
+/** Called once per tick with the world snapshot; the network layer encodes it once per codec. */
+export type BroadcastSnapshot = (snapshot: WorldSnapshot, players: Iterable<MatchPlayer>) => void
 
 interface Logger {
   warn(msg: string): void
@@ -66,7 +69,7 @@ export class Match {
   readonly players = new Map<PlayerId, MatchPlayer>()
   tick = 0
   running = false
-  onSend: SendSnapshot | null = null
+  onBroadcast: BroadcastSnapshot | null = null
   readonly log: Logger | null
   readonly tickMs = createSamples()
   readonly jitterMs = createSamples()
@@ -80,12 +83,12 @@ export class Match {
     this.log = log
   }
 
-  addPlayer({ id, name, codec = 'binary', socket = null, isBot = false }: { id: PlayerId; name: string; codec?: CodecName; socket?: WebSocket | null; isBot?: boolean }): MatchPlayer {
+  addPlayer({ id, name, codec = 'binary', socket = null, ai = null }: { id: PlayerId; name: string; codec?: CodecName; socket?: WebSocket | null; ai?: PlayerInput | null }): MatchPlayer {
     const ship = this.world.spawn(
       new Ship({ pos: this.world.findSafeSpot(), angle: 0, playerId: id, name, color: PALETTE[id % PALETTE.length] ?? '#5ec8ff' }),
     )
     ship.driven = true
-    const p: MatchPlayer = { id, name, ship, socket, codec, queue: [], lastSeq: toId<Seq>(0), controls: NO_CONTROLS, isBot }
+    const p: MatchPlayer = { id, name, ship, socket, codec, queue: [], lastSeq: toId<Seq>(0), controls: NO_CONTROLS, ai }
     this.players.set(id, p)
     if (!this.running) this.start()
     return p
@@ -112,6 +115,8 @@ export class Match {
   step(): WorldSnapshot {
     // 1. player ships: one physics step per received input (see Ship.update)
     for (const p of this.players.values()) {
+      const botInput = p.ai?.nextInput(this.world, p.ship)
+      if (botInput) this.queueInput(p.id, botInput) // bots use the same path as humans
       for (let i = 0; i < MAX_INPUTS_PER_TICK; i++) {
         const next = p.queue.shift()
         if (!next) break
@@ -135,7 +140,7 @@ export class Match {
     const start = performance.now()
     this.jitterMs.push(start - this.#nextAt)
     const snap = this.step()
-    for (const p of this.players.values()) this.onSend?.(p, { ...snap, ack: p.lastSeq })
+    this.onBroadcast?.(snap, this.players.values())
     this.tickMs.push(performance.now() - start)
     // absolute target times: errors don't accumulate the way chained setTimeout(…, 33) would
     this.#nextAt += TICK_MS
@@ -159,10 +164,24 @@ export class Match {
     clearTimeout(this.#timer)
   }
 
+  /** Removes all AI players; returns their ids so the caller can free them. */
+  removeBots(): PlayerId[] {
+    const ids = [...this.players.values()].filter((p) => p.ai).map((p) => p.id)
+    for (const id of ids) this.removePlayer(id)
+    return ids
+  }
+
+  get bots(): number {
+    let n = 0
+    for (const p of this.players.values()) if (p.ai) n++
+    return n
+  }
+
   stats() {
     return {
       room: this.room.id,
       players: this.players.size,
+      bots: this.bots,
       tick: this.tick,
       entities: this.world.size,
       tickMs: { p50: this.tickMs.pct(0.5), p99: this.tickMs.pct(0.99) },

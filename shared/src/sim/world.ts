@@ -1,7 +1,8 @@
 import { ARENA } from './arena.ts'
 import { Vector2 } from './vector.ts'
 import { createRng, type Rng } from './rng.ts'
-import { resolveCollisions, naivePairs, type FindPairs } from './collision.ts'
+import { resolveCollisions, type FindPairs } from './collision.ts'
+import { spatialHashPairs } from './spatial-hash.ts'
 import { Asteroid } from './asteroid.ts'
 import { Pickup, EFFECT_NAMES, type Effect } from './pickup.ts'
 import { homing } from './behaviors.ts'
@@ -45,7 +46,8 @@ export class World {
   targets = { asteroids: 0, pickups: 0 }
   maintenanceIn = 0
 
-  constructor({ seed = 1, findPairs = naivePairs }: { seed?: number; findPairs?: FindPairs } = {}) {
+  // Lab 7: spatial hash by default (naivePairs is still available and used in tests as the reference)
+  constructor({ seed = 1, findPairs = spatialHashPairs() }: { seed?: number; findPairs?: FindPairs } = {}) {
     this.rng = createRng(seed)
     this.findPairs = findPairs
   }

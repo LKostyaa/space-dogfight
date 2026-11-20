@@ -155,7 +155,7 @@ export function drawEntity(ctx: CanvasRenderingContext2D, e: ViewEntity, alpha: 
     case 'explosion':
       ctx.fillStyle = e.color
       ctx.globalAlpha = Math.max(0, e.life / 0.7)
-      for (const q of e.particles) ctx.fillRect(e.pos.x + q.offset.x, e.pos.y + q.offset.y, 2, 2)
+      for (const q of e.particles) ctx.fillRect(e.pos.x + q.x, e.pos.y + q.y, 2, 2)
       ctx.globalAlpha = 1
       return
     default:

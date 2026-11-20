@@ -15,6 +15,7 @@ import {
 import { toId, assertNever, type EntityId, type PlayerId, type Seq, type Tick } from '../types.ts'
 import { CodecError } from './errors.ts'
 import type { Codec, Wire } from './types.ts'
+import type { WorldSnapshot } from '../net/snapshot.ts'
 
 /**
  * Binary codec with DataView, little-endian. Layout: docs/protocol.md.
@@ -224,4 +225,13 @@ export function decodeInput(buf: Wire): InputMsg {
   return { seq: toId<Seq>(dv.getUint32(1, LE)), bits }
 }
 
-export const binaryCodec: Codec = { name: 'binary', encodeSnapshot, decodeSnapshot, encodeInput, decodeInput }
+export function prepareSnapshot(snap: WorldSnapshot): (ack: Seq) => ArrayBuffer {
+  const base = encodeSnapshot({ ...snap, ack: toId<Seq>(0) })
+  return (ack) => {
+    const copy = base.slice(0) // memcpy, far cheaper than encoding again
+    new DataView(copy).setUint32(6, ack >>> 0, LE)
+    return copy
+  }
+}
+
+export const binaryCodec: Codec = { name: 'binary', encodeSnapshot, prepareSnapshot, decodeSnapshot, encodeInput, decodeInput }

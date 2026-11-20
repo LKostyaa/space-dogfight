@@ -18,7 +18,7 @@ const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
       'abort',
       () => {
         clearTimeout(t)
-        reject(signal.reason)
+        reject(signal.reason instanceof Error ? signal.reason : new DOMException('aborted', 'AbortError'))
       },
       { once: true },
     )

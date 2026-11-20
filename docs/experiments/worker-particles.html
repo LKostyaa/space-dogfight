@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="uk">
+<meta charset="utf-8" />
+<title>Lab 7: particles on the main thread vs in a Web Worker</title>
+<body style="font-family: monospace">
+<pre id="out">running…</pre>
+<script type="module">
+// Particles are stored in a Float32Array [x, y, vx, vy] * N.
+// main:   update them on the main thread every frame
+// worker: transfer the buffer to a worker (zero-copy), it updates and transfers it back;
+//         the main thread only pays for postMessage + receiving.
+// We measure MAIN-THREAD time per frame (that is what the game loop competes for) for 120 frames.
+const workerSrc = `
+  onmessage = (e) => {
+    const { buf, dt } = e.data
+    const p = new Float32Array(buf)
+    for (let i = 0; i < p.length; i += 4) { p[i] += p[i + 2] * dt; p[i + 1] += p[i + 3] * dt }
+    postMessage({ buf }, [buf])
+  }`
+const worker = new Worker(URL.createObjectURL(new Blob([workerSrc], { type: 'text/javascript' })))
+const frame = () => new Promise((r) => requestAnimationFrame(r))
+const make = (n) => { const p = new Float32Array(n * 4); for (let i = 0; i < p.length; i++) p[i] = Math.random() * 100; return p }
+
+async function onMain(n) {
+  const p = make(n); const times = []
+  for (let f = 0; f < 120; f++) {
+    await frame()
+    const t = performance.now()
+    for (let i = 0; i < p.length; i += 4) { p[i] += p[i + 2] / 60; p[i + 1] += p[i + 3] / 60 }
+    times.push(performance.now() - t)
+  }
+  return times
+}
+
+async function inWorker(n) {
+  let buf = make(n).buffer; const times = []; let lagFrames = 0
+  for (let f = 0; f < 120; f++) {
+    await frame()
+    const t = performance.now()
+    const back = new Promise((r) => (worker.onmessage = (e) => r(e.data.buf)))
+    worker.postMessage({ buf, dt: 1 / 60 }, [buf])
+    let cost = performance.now() - t
+    const t0 = performance.now(); buf = await back
+    const waited = performance.now() - t0
+    if (waited > 16) lagFrames++
+    const t2 = performance.now(); new Float32Array(buf)[0]; cost += performance.now() - t2
+    times.push(cost)
+  }
+  return { times, lagFrames }
+}
+
+const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length
+const results = []
+for (const n of [144, 2000, 20000, 200000]) {
+  const m = await onMain(n)
+  const w = await inWorker(n)
+  results.push({ particles: n, mainMs: +avg(m).toFixed(4), workerMainThreadMs: +avg(w.times).toFixed(4), workerResultLateFrames: w.lagFrames })
+}
+document.getElementById('out').textContent = JSON.stringify(results, null, 1)
+window.__results = results
+</script>
+</body>
+</html>

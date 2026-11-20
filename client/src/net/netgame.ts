@@ -11,11 +11,14 @@ import { Bus } from '@dogfight/shared/sim/world.ts'
 import { toId, assertNever, type EntityId, type PlayerId, type Seq, type Tick } from '@dogfight/shared/types.ts'
 import type { Connection } from './connection.ts'
 import type { Lagger } from './latency.ts'
-import type { ViewEntity, ViewExplosion } from '../render/view-entity.ts'
+import { point, type ViewEntity, type ViewExplosion, type ViewShip, type ViewBullet } from '../render/view-entity.ts'
+import { measure } from '../perf.ts'
 
 const TICK_MS = 1000 / TICK_RATE
 const SMOOTH_MS = 100
-const BUFFER = 40
+// Lab 7: was 40 (1.3 s). Decoded snapshots lived long enough to be promoted to the old generation
+// and caused major GCs; interpolation needs ~4. 12 = 400 ms covers interpDelay up to ~300 ms.
+const BUFFER = 12
 
 /** Events the client's audio/HUD listen to: exactly the snapshot events. */
 export type ClientEvents = { [K in EventSnap['type']]: EventSnap }
@@ -51,7 +54,10 @@ interface PredictedBullet {
   readonly born: number
   confirmed: boolean
   readonly homing: boolean
+  readonly view: ViewBullet
 }
+
+const PARTICLES = 18
 
 interface BufferedSnapshot {
   readonly time: number
@@ -105,6 +111,15 @@ export class NetGame {
   cooldown = 0
   bullets: PredictedBullet[] = []
   effects: ViewExplosion[] = []
+  /** Lab 7: view objects are reused frame to frame instead of allocated (see README, profiling). */
+  readonly #views = new Map<EntityId, ViewEntity>()
+  readonly #touched = new Set<EntityId>()
+  readonly #out: ViewEntity[] = []
+  readonly #explosionPool: ViewExplosion[] = []
+  readonly #myView: ViewShip = {
+    kind: 'ship', pos: point(), prevPos: point(), angle: 0, prevAngle: 0, homing: false,
+    radius: 14, name: '', color: '#5ec8ff', hp: 0, dead: false, shield: false, thrust: false,
+  }
   buffer: BufferedSnapshot[] = []
   lastTick = -1
   clockOffset: number | null = null
@@ -143,7 +158,8 @@ export class NetGame {
     this.lagger.delay(() => {
       this.#bytes.in += size
       try {
-        this.#onSnapshot(this.codec.decodeSnapshot(raw))
+        const snap = measure('decode', () => this.codec.decodeSnapshot(raw))
+        this.#onSnapshot(snap)
       } catch (e: unknown) {
         if (e instanceof CodecError) console.warn('bad snapshot', e.message)
         else throw e
@@ -174,7 +190,7 @@ export class NetGame {
       this.pending = this.pending.filter((p) => p.seq > snap.ack)
     } else {
       const server: ShipState = { pos: new Vector2(mine.x, mine.y), vel: new Vector2(mine.vx, mine.vy), angle: mine.angle }
-      const r = reconcile(server, this.pending, snap.ack, DT, this.stepFn)
+      const r = measure('reconcile', () => reconcile(server, this.pending, snap.ack, DT, this.stepFn))
       if (this.predicted && this.prevPredicted) {
         const dx = wrapDelta(this.predicted.pos.x, r.state.pos.x, ARENA.width)
         const dy = wrapDelta(this.predicted.pos.y, r.state.pos.y, ARENA.height)
@@ -213,9 +229,10 @@ export class NetGame {
     }
   }
 
+  /** Explosions come from a pool; particles are plain numbers updated in place. */
   #explosion(x: number, y: number, color: string): void {
-    const pos = new Vector2(x, y)
-    this.effects.push({
+    const pos = point(x, y)
+    const fx: ViewExplosion = this.#explosionPool.pop() ?? {
       kind: 'explosion',
       pos,
       prevPos: pos,
@@ -223,12 +240,22 @@ export class NetGame {
       prevAngle: 0,
       homing: false,
       color,
-      life: 0.7,
-      particles: Array.from({ length: 18 }, () => ({
-        offset: new Vector2(),
-        vel: Vector2.fromAngle(this.rng.range(0, Math.PI * 2), this.rng.range(40, 220)),
-      })),
-    })
+      life: 0,
+      particles: Array.from({ length: PARTICLES }, () => ({ x: 0, y: 0, vx: 0, vy: 0 })),
+    }
+    fx.pos.x = x
+    fx.pos.y = y
+    fx.color = color
+    fx.life = 0.7
+    for (const p of fx.particles) {
+      const a = this.rng.range(0, Math.PI * 2)
+      const v = this.rng.range(40, 220)
+      p.x = 0
+      p.y = 0
+      p.vx = Math.cos(a) * v
+      p.vy = Math.sin(a) * v
+    }
+    this.effects.push(fx)
   }
 
   /** One client simulation step (30 Hz): send the input, predict my ship and bullets. */
@@ -246,7 +273,9 @@ export class NetGame {
       if (controls.fire && this.cooldown === 0) {
         const s = this.predicted
         const nose = s.pos.add(Vector2.fromAngle(s.angle, 18))
+        const bv = point()
         this.bullets.push({
+          view: { kind: 'bullet', pos: bv, prevPos: bv, angle: s.angle, prevAngle: s.angle, homing: (this.myFlags & ShipFlag.HOMING) !== 0, radius: 3 },
           seq: this.seq,
           pos: nose,
           prevPos: nose,
@@ -269,15 +298,21 @@ export class NetGame {
     this.stats.pending = this.pending.length
   }
 
-  /** Called every render frame. Returns drawable view objects. */
-  view(alpha: number, dtFrame: number): ViewEntity[] {
+  /**
+   * Called every render frame. Returns drawable view objects.
+   * Allocation-free in steady state: view objects live in #views (one per entity id),
+   * the output array is reused, positions are written into existing points.
+   */
+  view(alpha: number, dtFrame: number): readonly ViewEntity[] {
     const now = performance.now()
     // decay the correction offset smoothly over ~SMOOTH_MS
     const k = Math.exp(-(dtFrame * 1000) / (SMOOTH_MS / 3))
     this.smooth.x *= k
     this.smooth.y *= k
 
-    const out: ViewEntity[] = []
+    const out = this.#out
+    out.length = 0
+    this.#touched.clear()
     const renderTime = now - (this.clockOffset ?? 0) - this.interpDelay
     let a: BufferedSnapshot | undefined
     let b: BufferedSnapshot | undefined
@@ -295,35 +330,47 @@ export class NetGame {
     if (a) {
       for (const ea of a.entities.values()) {
         if (ea.kind === 'ship' && ea.playerId === this.myId && this.predict) continue
-        if (ea.kind === 'bullet' && ea.owner === this.myId && this.bullets.some((p) => (p.seq & 0xffff) === ea.seq)) continue
+        if (ea.kind === 'bullet' && ea.owner === this.myId && this.#hasPredicted(ea.seq)) continue
         const eb = b?.entities.get(ea.id)
         if (b && !eb) continue // gone in the next snapshot: it died
-        const s = eb && eb.kind === ea.kind ? eb : ea
-        const x = eb ? lerpWrap(ea.x, eb.x, t, ARENA.width) : ea.x
-        const y = eb ? lerpWrap(ea.y, eb.y, t, ARENA.height) : ea.y
-        out.push(this.#viewEntity(s, x, y, ea, eb, t))
+        const v = this.#viewFor(ea, eb && eb.kind === ea.kind ? eb : ea, t)
+        this.#touched.add(ea.id)
+        out.push(v)
       }
     }
+    // forget views of entities that are gone
+    for (const id of this.#views.keys()) if (!this.#touched.has(id)) this.#views.delete(id)
 
     if (this.predicted && this.prevPredicted && this.myShip && this.predict) {
       const p0 = this.prevPredicted
       const p1 = this.predicted
-      const x = lerpWrap(p0.pos.x, p1.pos.x, alpha, ARENA.width) + this.smooth.x
-      const y = lerpWrap(p0.pos.y, p1.pos.y, alpha, ARENA.height) + this.smooth.y
-      out.push(this.#shipView(this.myShip, new Vector2(x, y), lerpAngle(p0.angle, p1.angle, alpha)))
+      const v = this.#myView
+      v.pos.x = lerpWrap(p0.pos.x, p1.pos.x, alpha, ARENA.width) + this.smooth.x
+      v.pos.y = lerpWrap(p0.pos.y, p1.pos.y, alpha, ARENA.height) + this.smooth.y
+      v.prevPos = v.pos
+      v.angle = v.prevAngle = lerpAngle(p0.angle, p1.angle, alpha)
+      this.#fillShip(v, this.myShip)
+      out.push(v)
     }
     for (const bl of this.bullets) {
-      const pos = new Vector2(lerpWrap(bl.prevPos.x, bl.pos.x, alpha, ARENA.width), lerpWrap(bl.prevPos.y, bl.pos.y, alpha, ARENA.height))
-      const angle = Math.atan2(bl.vel.y, bl.vel.x)
-      out.push({ kind: 'bullet', pos, prevPos: pos, angle, prevAngle: angle, homing: bl.homing, radius: 3 })
+      bl.view.pos.x = lerpWrap(bl.prevPos.x, bl.pos.x, alpha, ARENA.width)
+      bl.view.pos.y = lerpWrap(bl.prevPos.y, bl.pos.y, alpha, ARENA.height)
+      out.push(bl.view)
     }
 
+    let alive = 0
     for (const fx of this.effects) {
       fx.life -= dtFrame
-      for (const p of fx.particles) p.offset = p.offset.add(p.vel.scale(dtFrame))
+      for (const p of fx.particles) {
+        p.x += p.vx * dtFrame
+        p.y += p.vy * dtFrame
+      }
+      if (fx.life > 0) {
+        this.effects[alive++] = fx
+        out.push(fx)
+      } else this.#explosionPool.push(fx)
     }
-    this.effects = this.effects.filter((fx) => fx.life > 0)
-    out.push(...this.effects)
+    this.effects.length = alive
 
     const latest = this.buffer.at(-1)
     this.stats.snapshotAge = latest ? now - latest.arrived : 0
@@ -336,45 +383,67 @@ export class NetGame {
     return out
   }
 
-  #shipView(e: ShipSnap, pos: Vector2, angle: number): ViewEntity {
-    const mine = e.playerId === this.myId
-    return {
-      kind: 'ship',
-      pos,
-      prevPos: pos,
-      angle,
-      prevAngle: angle,
-      homing: false,
-      radius: 14,
-      name: this.players.get(e.playerId)?.name ?? `#${e.playerId}`,
-      color: mine ? '#5ec8ff' : '#ff8a65',
-      hp: e.hp,
-      dead: (e.flags & ShipFlag.DEAD) !== 0,
-      shield: (e.flags & ShipFlag.SHIELD) !== 0,
-      thrust: (e.flags & ShipFlag.THRUST) !== 0,
-    }
+  #hasPredicted(seq: number): boolean {
+    for (const p of this.bullets) if ((p.seq & 0xffff) === seq) return true
+    return false
   }
 
-  /** Snapshot entity -> object the renderer understands. */
-  #viewEntity(s: EntitySnap, x: number, y: number, ea: EntitySnap, eb: EntitySnap | undefined, t: number): ViewEntity {
-    const pos = new Vector2(x, y)
-    const angleOf = (e: EntitySnap | undefined): number | undefined => (e && (e.kind === 'ship' || e.kind === 'asteroid') ? e.angle : undefined)
-    const a0 = angleOf(ea)
-    const a1 = angleOf(eb)
-    const angle = a0 === undefined ? 0 : a1 === undefined ? a0 : lerpAngle(a0, a1, t)
+  #fillShip(v: ViewShip, e: ShipSnap): void {
+    const mine = e.playerId === this.myId
+    v.name = this.players.get(e.playerId)?.name ?? 'pilot'
+    v.color = mine ? '#5ec8ff' : '#ff8a65'
+    v.hp = e.hp
+    v.dead = (e.flags & ShipFlag.DEAD) !== 0
+    v.shield = (e.flags & ShipFlag.SHIELD) !== 0
+    v.thrust = (e.flags & ShipFlag.THRUST) !== 0
+  }
+
+  /** Interpolated view of one snapshot entity, reusing the object from the previous frame. */
+  #viewFor(ea: EntitySnap, s: EntitySnap, t: number): ViewEntity {
+    let v = this.#views.get(ea.id)
+    if (!v || v.kind !== s.kind) {
+      v = this.#createView(s)
+      this.#views.set(ea.id, v)
+    }
+    const moved = s !== ea
+    v.pos.x = moved ? lerpWrap(ea.x, s.x, t, ARENA.width) : ea.x
+    v.pos.y = moved ? lerpWrap(ea.y, s.y, t, ARENA.height) : ea.y
     switch (s.kind) {
       case 'ship':
-        return this.#shipView(s, pos, angle)
-      case 'bullet': {
-        const dir = Math.atan2(s.vy, s.vx)
-        return { kind: 'bullet', pos, prevPos: pos, angle: dir, prevAngle: dir, homing: s.homing, radius: 3 }
-      }
+        if (v.kind === 'ship') {
+          v.angle = v.prevAngle = ea.kind === 'ship' ? lerpAngle(ea.angle, s.angle, t) : s.angle
+          this.#fillShip(v, s)
+        }
+        break
       case 'asteroid':
-        return { kind: 'asteroid', pos, prevPos: pos, angle, prevAngle: angle, homing: s.homing, radius: s.radius }
-      case 'pickup': {
-        const spin = performance.now() / 1000
-        return { kind: 'pickup', pos, prevPos: pos, angle: spin, prevAngle: spin, homing: false, effect: s.effect }
-      }
+        v.angle = v.prevAngle = ea.kind === 'asteroid' ? lerpAngle(ea.angle, s.angle, t) : s.angle
+        v.homing = s.homing
+        break
+      case 'bullet':
+        v.angle = v.prevAngle = Math.atan2(s.vy, s.vx)
+        v.homing = s.homing
+        break
+      case 'pickup':
+        v.angle = v.prevAngle = performance.now() / 1000
+        break
+      default:
+        assertNever(s, 'snapshot entity')
+    }
+    return v
+  }
+
+  #createView(s: EntitySnap): ViewEntity {
+    const pos = point(s.x, s.y)
+    const base = { pos, prevPos: pos, angle: 0, prevAngle: 0, homing: false }
+    switch (s.kind) {
+      case 'ship':
+        return { ...base, kind: 'ship', radius: 14, name: '', color: '', hp: 0, dead: false, shield: false, thrust: false }
+      case 'bullet':
+        return { ...base, kind: 'bullet', radius: 3 }
+      case 'asteroid':
+        return { ...base, kind: 'asteroid', radius: s.radius }
+      case 'pickup':
+        return { ...base, kind: 'pickup', effect: s.effect }
       default:
         return assertNever(s, 'snapshot entity')
     }

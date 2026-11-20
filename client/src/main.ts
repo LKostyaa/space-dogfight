@@ -18,6 +18,7 @@ import { Connection, wsUrl } from './net/connection.ts'
 import { createLagger } from './net/latency.ts'
 import { NetGame, type ClientEvents } from './net/netgame.ts'
 import { mountChat } from './ui/chat.ts'
+import { measure, perfReport, resetPerf } from './perf.ts'
 
 // URL flags:
 //   loading tests (Lab 3): ?missing=1 ?slow=ms ?abort=ms ?badjson=1 ?sequential=1
@@ -128,16 +129,19 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
     // the client simulates at the server's tick rate (30 Hz); rendering interpolates at display rate
     step: DT,
     simulate() {
-      game.step(document.activeElement instanceof HTMLInputElement ? IDLE : readControls(input))
+      measure('simulate', () => game.step(document.activeElement instanceof HTMLInputElement ? IDLE : readControls(input)))
       input.endStep()
     },
     render(alpha, stats) {
       const now = performance.now()
       const dtFrame = Math.min(0.1, (now - lastRender) / 1000)
       lastRender = now
-      beginFrame(ctx, view, ARENA)
-      for (const e of game.view(alpha, dtFrame)) drawEntity(ctx, e, 1, sprites)
-      endFrame(ctx)
+      const entities = measure('interpolate', () => game.view(alpha, dtFrame))
+      measure('render', () => {
+        beginFrame(ctx, view, ARENA)
+        for (const e of entities) drawEntity(ctx, e, 1, sprites)
+        endFrame(ctx)
+      })
       drawHud(ctx, [
         `${room.name} — sim ${stats.stepsPerSecond}/s  frames ${stats.framesPerSecond}/s`,
         `score ${game.myScore}  hp ${game.myShip?.hp ?? '-'}  players ${game.players.size}`,
@@ -147,7 +151,7 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
     },
   })
   loop.start()
-  Object.assign(window, { __loop: loop, __game: game, __conn: conn, __lagger: lagger })
+  Object.assign(window, { __loop: loop, __game: game, __conn: conn, __lagger: lagger, __perf: { report: perfReport, reset: resetPerf } })
 }
 
 async function boot(): Promise<void> {

@@ -3,18 +3,18 @@ import { WebSocketServer, type WebSocket, type RawData } from 'ws'
 import { getCodec, CodecError } from '@dogfight/shared/codec/index.ts'
 import { TICK_RATE } from '@dogfight/shared/sim/constants.ts'
 import { parseClientMessage, encodeServerMessage, type CodecName, type ClientMessage } from '@dogfight/shared/protocol.ts'
-import { toId, assertNever, type PlayerId } from '@dogfight/shared/types.ts'
+import { assertNever, type PlayerId, type Seq } from '@dogfight/shared/types.ts'
 import { Close } from './protocol.ts'
 import { createTokenBucket, type TokenBucket } from './ratelimit.ts'
+import { startHeartbeat } from './heartbeat.ts'
 import type { Room, RoomManager } from './rooms.ts'
-import type { MatchPlayer } from './match.ts'
 import type { ServerConfig } from './config.ts'
+import { playerIds } from './ids.ts'
 
 const JOIN_TIMEOUT_MS = 5000
 const HEARTBEAT_MS = 15000
 const SLOW_CLIENT_BYTES = 256 * 1024
 
-let nextPlayerId = 1
 
 export interface NetStats {
   bytesOut: number
@@ -60,18 +60,13 @@ export function attachWebSocket(
   const conns = new Set<Conn>()
 
   // Heartbeat: ping everyone every 15 s; two missed pongs -> terminate.
-  const heartbeat = setInterval(() => {
-    for (const c of conns) {
-      if (c.missedPongs >= 2) {
-        log.warn(`terminating dead socket player=${c.player?.id}`)
-        c.ws.terminate()
-        continue
-      }
-      c.missedPongs++
-      c.ws.ping()
-    }
-  }, HEARTBEAT_MS)
-  wss.on('close', () => clearInterval(heartbeat))
+  const stopHeartbeat = startHeartbeat(
+    function* () {
+      for (const c of conns) yield { get missedPongs() { return c.missedPongs }, set missedPongs(v: number) { c.missedPongs = v }, ping: () => c.ws.ping(), terminate: () => c.ws.terminate() }
+    },
+    { intervalMs: HEARTBEAT_MS, onDead: () => log.warn('terminating a dead socket (2 missed pongs)') },
+  )
+  wss.on('close', stopHeartbeat)
 
   /** Sends unless the client can't keep up. Non-critical messages are dropped for slow clients. */
   function send(ws: WebSocket, data: string | ArrayBuffer, { critical = true } = {}): void {
@@ -98,8 +93,15 @@ export function attachWebSocket(
   function wireRoom(room: Room): void {
     if (room.wired || !room.match) return
     room.wired = true
-    room.match.onSend = (player: MatchPlayer, snapshot) => {
-      if (player.socket) send(player.socket, getCodec(player.codec).encodeSnapshot(snapshot), { critical: false })
+    room.match.onBroadcast = (snapshot, players) => {
+      // encode once per codec per tick, then patch each client's ack
+      const prepared = new Map<CodecName, (ack: Seq) => string | ArrayBuffer>()
+      for (const p of players) {
+        if (!p.socket) continue
+        let make = prepared.get(p.codec)
+        if (!make) prepared.set(p.codec, (make = getCodec(p.codec).prepareSnapshot(snapshot)))
+        send(p.socket, make(p.lastSeq), { critical: false })
+      }
     }
     const roster = (): void => broadcast(room, encodeServerMessage({ v: 1, type: 'roster', players: rosterOf(room) }))
     room.on('join', roster)
@@ -120,8 +122,9 @@ export function attachWebSocket(
       }
     }
     if (room.full || !room.match) return c.ws.close(Close.ROOM_FULL, 'room full')
+    const id = playerIds.take()
+    if (id === null) return c.ws.close(Close.SERVER_FULL, 'server full')
     clearTimeout(c.joinTimer)
-    const id = toId<PlayerId>(nextPlayerId++)
     c.player = { id, name: msg.name }
     c.codec = msg.codec ?? 'binary'
     c.room = room
@@ -196,6 +199,7 @@ export function attachWebSocket(
       if (c.player && c.room) {
         c.room.match?.removePlayer(c.player.id)
         c.room.leave(c.player.id)
+        playerIds.release(c.player.id)
       }
     })
   })
@@ -208,7 +212,7 @@ export function attachWebSocket(
         send(c.ws, encodeServerMessage({ v: 1, type: 'shutdown' }))
         c.ws.close(Close.GOING_AWAY, 'server shutting down')
       }
-      clearInterval(heartbeat)
+      stopHeartbeat()
     },
   }
 }

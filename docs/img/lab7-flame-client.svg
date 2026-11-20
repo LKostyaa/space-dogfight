@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="328" font-family="monospace" font-size="11"><rect width="100%" height="100%" fill="#fff"/><text x="4" y="16" font-family="sans-serif" font-size="13" font-weight="bold">Клієнт: 8 кораблів, стрільба, 30 с — busy CPU 1.98 s (idle excluded)</text>
+<g><title>frame main.js:4167 84.1%</title><rect x="0.0" y="24" width="924.4" height="17" fill="#f5a65b"/>
+<text x="3.0" y="36" clip-path="none">frame main.js:4167</text>
+</g>
+<g><title>render main.js:5762 65.4%</title><rect x="0.0" y="42" width="718.7" height="17" fill="#f0b45a"/>
+<text x="3.0" y="54" clip-path="none">render main.js:5762</text>
+</g>
+<g><title>measure main.js:5230 61.6%</title><rect x="0.0" y="60" width="677.4" height="17" fill="#e98b5d"/>
+<text x="3.0" y="72" clip-path="none">measure main.js:5230</text>
+</g>
+<g><title>(anon) main.js:5767 53.5%</title><rect x="0.0" y="78" width="587.8" height="17" fill="#e9a15e"/>
+<text x="3.0" y="90" clip-path="none">(anon) main.js:5767</text>
+</g>
+<g><title>drawEntity main.js:4362 43.1%</title><rect x="0.0" y="96" width="473.9" height="17" fill="#e98b5d"/>
+<text x="3.0" y="108" clip-path="none">drawEntity main.js:4362</text>
+</g>
+<g><title>draw main.js:4481 30.9%</title><rect x="0.0" y="114" width="339.1" height="17" fill="#e9a15e"/>
+<text x="3.0" y="126" clip-path="none">draw main.js:4481</text>
+</g>
+<g><title>drawImage 27.6%</title><rect x="0.0" y="132" width="303.5" height="17" fill="#f0b45a"/>
+<text x="3.0" y="144" clip-path="none">drawImage</text>
+</g>
+<g><title>save 2.3%</title><rect x="304.0" y="132" width="25.2" height="17" fill="#f3c26b"/>
+</g>
+<g><title>rotate 0.5%</title><rect x="329.6" y="132" width="4.8" height="17" fill="#f3c26b"/>
+</g>
+<g><title>translate 0.2%</title><rect x="335.0" y="132" width="2.0" height="17" fill="#e98b5d"/>
+</g>
+<g><title>drawShip main.js:4341 10.5%</title><rect x="339.6" y="114" width="114.8" height="17" fill="#f3c26b"/>
+<text x="342.6" y="126" clip-path="none">drawShip main.js:</text>
+</g>
+<g><title>draw main.js:4481 6.2%</title><rect x="339.6" y="132" width="68.1" height="17" fill="#e9a15e"/>
+<text x="342.6" y="144" clip-path="none">draw main.</text>
+</g>
+<g><title>drawImage 5.5%</title><rect x="339.6" y="150" width="60.4" height="17" fill="#f0b45a"/>
+<text x="342.6" y="162" clip-path="none">drawImage</text>
+</g>
+<g><title>save 0.4%</title><rect x="400.5" y="150" width="4.1" height="17" fill="#f3c26b"/>
+</g>
+<g><title>drawShipDecor main.js:4324 2.7%</title><rect x="408.2" y="132" width="29.3" height="17" fill="#f0b45a"/>
+</g>
+<g><title>fillText 0.8%</title><rect x="408.2" y="150" width="8.8" height="17" fill="#e9a15e"/>
+</g>
+<g><title>fillRect 0.2%</title><rect x="417.6" y="150" width="2.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>drawFlame main.js:4312 1.3%</title><rect x="438.1" y="132" width="13.7" height="17" fill="#f3c26b"/>
+</g>
+<g><title>fill 0.2%</title><rect x="438.1" y="150" width="2.2" height="17" fill="#e98b5d"/>
+</g>
+<g><title>save 0.2%</title><rect x="440.8" y="150" width="2.1" height="17" fill="#f3c26b"/>
+</g>
+<g><title>restore 0.2%</title><rect x="443.3" y="150" width="1.6" height="17" fill="#f3c26b"/>
+</g>
+<g><title>pose main.js:4285 0.4%</title><rect x="454.9" y="114" width="4.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>fillRect 0.2%</title><rect x="459.7" y="114" width="2.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>beginFrame main.js:4297 8.7%</title><rect x="474.4" y="96" width="95.4" height="17" fill="#e9a15e"/>
+<text x="477.4" y="108" clip-path="none">beginFrame mai</text>
+</g>
+<g><title>fillRect 3.8%</title><rect x="474.4" y="114" width="41.5" height="17" fill="#f5a65b"/>
+<text x="477.4" y="126" clip-path="none">fillRe</text>
+</g>
+<g><title>save 0.4%</title><rect x="516.4" y="114" width="3.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) main.js:5766 4.6%</title><rect x="588.3" y="78" width="50.4" height="17" fill="#f3c26b"/>
+<text x="591.3" y="90" clip-path="none">(anon) </text>
+</g>
+<g><title>view main.js:5483 4.4%</title><rect x="588.3" y="96" width="47.5" height="17" fill="#f0b45a"/>
+<text x="591.3" y="108" clip-path="none">view ma</text>
+</g>
+<g><title>#viewFor main.js:5569 1.4%</title><rect x="588.3" y="114" width="15.4" height="17" fill="#f5a65b"/>
+</g>
+<g><title>lerpAngle2 main.js:5275 0.3%</title><rect x="588.3" y="132" width="3.2" height="17" fill="#f0b45a"/>
+</g>
+<g><title>lerpWrap main.js:5271 0.3%</title><rect x="592.0" y="132" width="2.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>mark 2.4%</title><rect x="639.2" y="78" width="25.5" height="17" fill="#e98b5d"/>
+</g>
+<g><title>measure 0.4%</title><rect x="665.2" y="78" width="3.8" height="17" fill="#e98b5d"/>
+</g>
+<g><title>drawHud main.js:4413 2.9%</title><rect x="677.9" y="60" width="31.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) main.js:4418 2.6%</title><rect x="677.9" y="78" width="28.4" height="17" fill="#e98b5d"/>
+</g>
+<g><title>fillText 2.4%</title><rect x="677.9" y="96" width="26.2" height="17" fill="#e9a15e"/>
+</g>
+<g><title>lines main.js:4637 0.1%</title><rect x="709.6" y="60" width="1.1" height="17" fill="#e98b5d"/>
+</g>
+<g><title>next main.js:4164 9.1%</title><rect x="719.2" y="42" width="99.8" height="17" fill="#f3c26b"/>
+<text x="722.2" y="54" clip-path="none">next main.js:41</text>
+</g>
+<g><title>requestAnimationFrame 9.1%</title><rect x="719.2" y="60" width="99.3" height="17" fill="#f3c26b"/>
+<text x="722.2" y="72" clip-path="none">requestAnimatio</text>
+</g>
+<g><title>simulate main.js:5758 8.0%</title><rect x="819.5" y="42" width="87.8" height="17" fill="#f3c26b"/>
+<text x="822.5" y="54" clip-path="none">simulate main</text>
+</g>
+<g><title>measure main.js:5230 7.8%</title><rect x="819.5" y="60" width="85.1" height="17" fill="#e98b5d"/>
+<text x="822.5" y="72" clip-path="none">measure main</text>
+</g>
+<g><title>(anon) main.js:5759 5.3%</title><rect x="819.5" y="78" width="57.9" height="17" fill="#f5a65b"/>
+<text x="822.5" y="90" clip-path="none">(anon) m</text>
+</g>
+<g><title>step main.js:5441 4.4%</title><rect x="819.5" y="96" width="48.3" height="17" fill="#f3c26b"/>
+<text x="822.5" y="108" clip-path="none">step ma</text>
+</g>
+<g><title>#send main.js:5345 3.2%</title><rect x="819.5" y="114" width="35.0" height="17" fill="#f0b45a"/>
+</g>
+<g><title>delay main.js:4925 3.2%</title><rect x="819.5" y="132" width="34.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>(anon) main.js:5347 3.2%</title><rect x="819.5" y="150" width="34.4" height="17" fill="#e9a15e"/>
+</g>
+<g><title>send main.js:4899 3.2%</title><rect x="819.5" y="168" width="34.3" height="17" fill="#f3c26b"/>
+</g>
+<g><title>send 3.1%</title><rect x="819.5" y="186" width="33.6" height="17" fill="#e9a15e"/>
+</g>
+<g><title>encodeInput main.js:5157 0.4%</title><rect x="855.1" y="114" width="4.2" height="17" fill="#f5a65b"/>
+</g>
+<g><title>emit main.js:4133 0.4%</title><rect x="859.7" y="114" width="4.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>dispatchEvent 0.4%</title><rect x="859.7" y="132" width="3.9" height="17" fill="#f0b45a"/>
+</g>
+<g><title>listener main.js:4137 0.3%</title><rect x="859.7" y="150" width="3.1" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) main.js:4617 0.3%</title><rect x="859.7" y="168" width="3.1" height="17" fill="#f5a65b"/>
+</g>
+<g><title>play main.js:4602 0.3%</title><rect x="859.7" y="186" width="3.1" height="17" fill="#f3c26b"/>
+</g>
+<g><title>stepShipState main.js:5208 0.3%</title><rect x="864.3" y="114" width="2.6" height="17" fill="#f5a65b"/>
+</g>
+<g><title>integrate main.js:5199 0.2%</title><rect x="864.3" y="132" width="2.1" height="17" fill="#f5a65b"/>
+</g>
+<g><title>mark 1.6%</title><rect x="877.9" y="78" width="16.8" height="17" fill="#e98b5d"/>
+</g>
+<g><title>measure 0.2%</title><rect x="895.2" y="78" width="1.5" height="17" fill="#e98b5d"/>
+</g>
+<g><title>(anon) main.js:4859 12.8%</title><rect x="924.9" y="24" width="140.2" height="17" fill="#f5a65b"/>
+<text x="927.9" y="36" clip-path="none">(anon) main.js:4859</text>
+</g>
+<g><title>#onMessage main.js:4870 11.7%</title><rect x="924.9" y="42" width="127.9" height="17" fill="#e98b5d"/>
+<text x="927.9" y="54" clip-path="none">#onMessage main.js:</text>
+</g>
+<g><title>emit main.js:4133 10.6%</title><rect x="924.9" y="60" width="116.1" height="17" fill="#f5a65b"/>
+<text x="927.9" y="72" clip-path="none">emit main.js:4133</text>
+</g>
+<g><title>dispatchEvent 8.9%</title><rect x="924.9" y="78" width="97.5" height="17" fill="#f0b45a"/>
+<text x="927.9" y="90" clip-path="none">dispatchEvent</text>
+</g>
+<g><title>listener main.js:4137 8.2%</title><rect x="924.9" y="96" width="90.0" height="17" fill="#f5a65b"/>
+<text x="927.9" y="108" clip-path="none">listener main</text>
+</g>
+<g><title>(anon) main.js:5340 8.0%</title><rect x="924.9" y="114" width="87.5" height="17" fill="#e98b5d"/>
+<text x="927.9" y="126" clip-path="none">(anon) main.j</text>
+</g>
+<g><title>#receive main.js:5349 8.0%</title><rect x="924.9" y="132" width="87.3" height="17" fill="#f0b45a"/>
+<text x="927.9" y="144" clip-path="none">#receive main</text>
+</g>
+<g><title>delay main.js:4925 8.0%</title><rect x="924.9" y="150" width="87.3" height="17" fill="#f3c26b"/>
+<text x="927.9" y="162" clip-path="none">delay main.js</text>
+</g>
+<g><title>(anon) main.js:5351 8.0%</title><rect x="924.9" y="168" width="87.3" height="17" fill="#e9a15e"/>
+<text x="927.9" y="180" clip-path="none">(anon) main.j</text>
+</g>
+<g><title>measure main.js:5230 4.2%</title><rect x="924.9" y="186" width="45.4" height="17" fill="#e98b5d"/>
+<text x="927.9" y="198" clip-path="none">measur</text>
+</g>
+<g><title>(anon) main.js:5354 2.2%</title><rect x="924.9" y="204" width="24.0" height="17" fill="#f0b45a"/>
+</g>
+<g><title>decodeSnapshot main.js:5061 1.0%</title><rect x="924.9" y="222" width="10.4" height="17" fill="#f3c26b"/>
+</g>
+<g><title>mark 1.5%</title><rect x="949.4" y="204" width="15.7" height="17" fill="#e98b5d"/>
+</g>
+<g><title>#onSnapshot main.js:5362 3.6%</title><rect x="970.9" y="186" width="39.0" height="17" fill="#f3c26b"/>
+</g>
+<g><title>emit main.js:4133 1.0%</title><rect x="970.9" y="204" width="10.7" height="17" fill="#f5a65b"/>
+</g>
+<g><title>dispatchEvent 0.9%</title><rect x="970.9" y="222" width="9.4" height="17" fill="#f0b45a"/>
+</g>
+<g><title>listener main.js:4137 0.6%</title><rect x="970.9" y="240" width="6.0" height="17" fill="#f5a65b"/>
+</g>
+<g><title>(anon) main.js:4618 0.5%</title><rect x="970.9" y="258" width="4.9" height="17" fill="#e98b5d"/>
+</g>
+<g><title>play main.js:4602 0.5%</title><rect x="970.9" y="276" width="4.9" height="17" fill="#f3c26b"/>
+</g>
+<g><title>createBufferSource 0.2%</title><rect x="970.9" y="294" width="1.8" height="17" fill="#f0b45a"/>
+</g>
+<g><title>measure main.js:5230 0.3%</title><rect x="982.0" y="204" width="3.1" height="17" fill="#e98b5d"/>
+</g>
+<g><title>mark 0.1%</title><rect x="982.0" y="222" width="1.1" height="17" fill="#e98b5d"/>
+</g>
+<g><title>#explosion main.js:5413 0.2%</title><rect x="985.6" y="204" width="1.5" height="17" fill="#e98b5d"/>
+</g>
+<g><title>(anon) main.js:5369 0.2%</title><rect x="987.6" y="204" width="1.3" height="17" fill="#e9a15e"/>
+</g>
+<g><title>(anon) main.js:5342 0.2%</title><rect x="1012.9" y="114" width="1.8" height="17" fill="#e98b5d"/>
+</g>
+<g><title>delay main.js:4925 0.2%</title><rect x="1012.9" y="132" width="1.8" height="17" fill="#f3c26b"/>
+</g>
+<g><title>CustomEvent 0.3%</title><rect x="1023.0" y="78" width="3.1" height="17" fill="#e98b5d"/>
+</g>
+<g><title>parseServerMessage main.js:4812 1.0%</title><rect x="1041.5" y="60" width="10.0" height="17" fill="#e98b5d"/>
+</g>
+<g><title>safeParse main.js:709 0.9%</title><rect x="1041.5" y="78" width="9.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>_parseSync main.js:692 0.9%</title><rect x="1041.5" y="96" width="9.9" height="17" fill="#e98b5d"/>
+</g>
+<g><title>_parse main.js:2836 0.9%</title><rect x="1041.5" y="114" width="9.9" height="17" fill="#f5a65b"/>
+</g>
+<g><title>_processInputParams main.js:679 0.9%</title><rect x="1041.5" y="132" width="9.7" height="17" fill="#f0b45a"/>
+</g>
+<g><title>(garbage collector) 3.0%</title><rect x="1065.6" y="24" width="32.5" height="17" fill="#f5a65b"/>
+</g>
+</svg>

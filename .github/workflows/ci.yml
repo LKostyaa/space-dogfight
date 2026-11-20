@@ -14,4 +14,14 @@ jobs:
       # npm ci when package-lock.json is committed (reproducible), npm install otherwise
       - run: if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
+      - run: npm run coverage
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: test-results/

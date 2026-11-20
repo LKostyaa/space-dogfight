@@ -11,6 +11,10 @@ import { attachWebSocket, type NetStats } from './ws.ts'
 import { startMatchLog, type MatchLog } from './log/matchlog.ts'
 import { serveStatic } from './static.ts'
 import { Match } from './match.ts'
+import { Bot } from './bot.ts'
+import { createRng } from '@dogfight/shared/sim/rng.ts'
+import { playerIds } from './ids.ts'
+import { performance as perf } from 'node:perf_hooks'
 
 const config = loadConfig()
 const rooms = new RoomManager(config)
@@ -45,6 +49,7 @@ rooms.create({ id: 'belt', name: 'Asteroid belt', arena: 'belt', persistent: tru
 rooms.create({ id: 'duel', name: 'Duel', arena: 'classic', maxPlayers: 2, persistent: true })
 
 const MAX_BODY = 1024
+let lastElu = perf.eventLoopUtilization()
 const CreateRoomBody = z.object({ name: z.string().min(1).max(32), arena: z.string().optional() })
 
 function json(res: ServerResponse, status: number, body: unknown): void {
@@ -76,7 +81,34 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   }
   if (route === 'GET /api/rooms') return json(res, 200, rooms.list())
   if (route === 'GET /api/stats') {
-    return json(res, 200, { net: netStats, rss: process.memoryUsage().rss, rooms: rooms.list().map((r) => r.match?.stats()) })
+    const elu = perf.eventLoopUtilization(lastElu)
+    lastElu = perf.eventLoopUtilization()
+    return json(res, 200, { net: netStats, rss: process.memoryUsage().rss, elu: elu.utilization, rooms: rooms.list().map((r) => r.match?.stats()) })
+  }
+  const bots = /^\/api\/rooms\/([a-z0-9-]+)\/bots$/.exec(url.pathname)
+  if (req.method === 'DELETE' && bots?.[1]) {
+    const room = rooms.get(bots[1])
+    if (!room?.match) return json(res, 404, { error: 'no such room' })
+    const removed = room.match.removeBots()
+    for (const id of removed) {
+      room.leave(id)
+      playerIds.release(id)
+    }
+    return json(res, 200, { removed: removed.length })
+  }
+  if (req.method === 'POST' && bots?.[1]) {
+    const room = rooms.get(bots[1])
+    if (!room?.match) return json(res, 404, { error: 'no such room' })
+    const body = z.object({ count: z.number().int().min(1).max(8) }).safeParse(await readBody(req))
+    if (!body.success) return json(res, 400, { error: 'count: 1..8' })
+    let added = 0
+    for (let i = 0; i < body.data.count && !room.full; i++, added++) {
+      const id = playerIds.take()
+      if (id === null) break
+      room.match.addPlayer({ id, name: `bot-${id}`, ai: new Bot(createRng(id)) })
+      room.join({ id, name: `bot-${id}`, socket: null })
+    }
+    return json(res, 201, { added, players: room.players.size })
   }
   if (route === 'POST /api/rooms') {
     const body = CreateRoomBody.safeParse(await readBody(req))

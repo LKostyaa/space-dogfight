@@ -139,7 +139,7 @@ export class RoomManager extends EventEmitter<RoomManagerEvents> {
   create({ id, name, arena, maxPlayers, persistent = false }: RoomInit): Room {
     if (this.#rooms.has(id)) throw new Error(`room ${id} exists`)
     if (this.#rooms.size >= this.maxRooms) throw new Error('too many rooms')
-    const room = new Room({ id, name, ...(arena ? { arena } : {}), maxPlayers: Math.min(maxPlayers ?? 8, this.maxPlayersPerRoom), persistent })
+    const room = new Room({ id, name, ...(arena ? { arena } : {}), maxPlayers: Math.min(maxPlayers ?? this.maxPlayersPerRoom, this.maxPlayersPerRoom), persistent })
     this.#rooms.set(id, room)
     room.on('empty', () => {
       if (!room.persistent) this.delete(id)

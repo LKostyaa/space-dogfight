@@ -21,7 +21,19 @@ export interface LoopStats {
   stepsPerSecond: number
   framesPerSecond: number
   frameTimeMs: number
-  readonly frameTimes: number[]
+  /** last FRAME_SAMPLES frame times, ring buffer (no push/shift garbage) */
+  readonly frameTimes: Float64Array
+  frameCount: number
+}
+
+export const FRAME_SAMPLES = 3000
+
+/** Frame times recorded so far, oldest first (for percentiles in tests / the profiling script). */
+export function frameTimesOf(stats: LoopStats): number[] {
+  const n = Math.min(stats.frameCount, FRAME_SAMPLES)
+  const out: number[] = []
+  for (let i = 0; i < n; i++) out.push(stats.frameTimes[(stats.frameCount - n + i) % FRAME_SAMPLES] ?? 0)
+  return out
 }
 
 export interface LoopOptions {
@@ -30,6 +42,9 @@ export interface LoopOptions {
   render: (alpha: number, stats: LoopStats) => void
   scheduler?: 'raf' | 'interval'
   fixed?: boolean
+  /** injectable for tests (fake frames); defaults to requestAnimationFrame */
+  requestFrame?: (cb: FrameRequestCallback) => number
+  cancelFrame?: (handle: number) => void
 }
 
 export interface Loop {
@@ -38,13 +53,21 @@ export interface Loop {
   readonly stats: LoopStats
 }
 
-export function createLoop({ step = 1 / 60, simulate, render, scheduler = 'raf', fixed = true }: LoopOptions): Loop {
+export function createLoop({
+  step = 1 / 60,
+  simulate,
+  render,
+  scheduler = 'raf',
+  fixed = true,
+  requestFrame = (cb) => requestAnimationFrame(cb),
+  cancelFrame = (h) => cancelAnimationFrame(h),
+}: LoopOptions): Loop {
   let handle = 0
   let running = false
-  let last = 0
+  let last: number | null = null // null = no frame yet (0 is a valid timestamp — a test found this)
   let acc = 0
 
-  const stats: LoopStats = { stepsPerSecond: 0, framesPerSecond: 0, frameTimeMs: 0, frameTimes: [] }
+  const stats: LoopStats = { stepsPerSecond: 0, framesPerSecond: 0, frameTimeMs: 0, frameTimes: new Float64Array(FRAME_SAMPLES), frameCount: 0 }
   let stepCount = 0
   let frameCount = 0
   let windowStart = 0
@@ -57,20 +80,17 @@ export function createLoop({ step = 1 / 60, simulate, render, scheduler = 'raf',
           stop: (h: number) => window.clearInterval(h),
         }
       : {
-          start: (fn: FrameRequestCallback) => requestAnimationFrame(fn),
-          next: (fn: FrameRequestCallback) => (handle = requestAnimationFrame(fn)),
-          stop: (h: number) => cancelAnimationFrame(h),
+          start: (fn: FrameRequestCallback) => requestFrame(fn),
+          next: (fn: FrameRequestCallback) => (handle = requestFrame(fn)),
+          stop: (h: number) => cancelFrame(h),
         }
 
   function frame(t: number): void {
     if (!running) return
-    const raw = last === 0 ? 0 : t - last
+    const raw = last === null ? 0 : t - last
     const dt = Math.min(raw / 1000, MAX_FRAME)
     stats.frameTimeMs = raw
-    if (raw > 0) {
-      stats.frameTimes.push(raw)
-      if (stats.frameTimes.length > 600) stats.frameTimes.shift()
-    }
+    if (raw > 0) stats.frameTimes[stats.frameCount++ % FRAME_SAMPLES] = raw
     last = t
 
     if (fixed) {
@@ -105,7 +125,7 @@ export function createLoop({ step = 1 / 60, simulate, render, scheduler = 'raf',
     start() {
       if (running) return
       running = true
-      last = 0
+      last = null
       acc = 0
       windowStart = performance.now()
       handle = schedule.start(frame)

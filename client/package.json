@@ -9,11 +9,13 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p .",
     "lint": "eslint src",
-    "format": "prettier --write src index.html"
+    "format": "prettier --write src index.html",
+    "test": "vitest run"
   },
   "devDependencies": {
     "typescript": "^5.8.0",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^3.0.0"
   },
   "dependencies": {
     "@dogfight/shared": "*",
