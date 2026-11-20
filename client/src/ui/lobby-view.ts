@@ -7,12 +7,13 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
 }
 
 /** DOM rendering of the Lobby model. Only listens to its events and calls lobby.join(). */
-export function mountLobbyView(root: HTMLElement, lobby: Lobby, { warnings = [] }: { warnings?: readonly string[] } = {}): void {
-  const nameEl = el('input', { id: 'pilot', maxLength: 16, value: `pilot-${Math.floor(Math.random() * 900 + 100)}` })
+export function mountLobbyView(root: HTMLElement, lobby: Lobby, { warnings = [], notice = '', name = '' }: { warnings?: readonly string[]; notice?: string; name?: string } = {}): void {
+  const nameEl = el('input', { id: 'pilot', maxLength: 16, value: name || `pilot-${Math.floor(Math.random() * 900 + 100)}` })
+  const noticeEl = el('p', { id: 'lobby-notice', className: 'notice', textContent: notice, hidden: !notice })
   const list = el('ul', { id: 'rooms' }, el('li', { className: 'muted' }, 'loading…'))
   const errorEl = el('p', { id: 'lobby-error', className: 'error' })
   const warnEl = el('ul', { className: 'warnings' }, ...warnings.map((w) => el('li', { className: 'muted' }, `⚠ ${w}`)))
-  root.replaceChildren(el('div', { className: 'panel' }, el('h1', {}, 'Space Dogfight'), el('label', {}, 'Pilot name ', nameEl), el('h2', {}, 'Rooms'), list, errorEl, warnEl))
+  root.replaceChildren(el('div', { className: 'panel' }, el('h1', {}, 'Space Dogfight'), noticeEl, el('label', {}, 'Pilot name ', nameEl), el('h2', {}, 'Rooms'), list, errorEl, warnEl))
 
   const offRooms = lobby.on('rooms', ({ rooms }) => {
     errorEl.textContent = ''
@@ -26,8 +27,8 @@ export function mountLobbyView(root: HTMLElement, lobby: Lobby, { warnings = [] 
       }),
     )
   })
-  const offError = lobby.on('error', ({ error }) => {
-    errorEl.textContent = `Could not load rooms: ${error instanceof Error ? error.message : String(error)}. Retrying…`
+  const offError = lobby.on('error', ({ error, retryInMs }) => {
+    errorEl.textContent = `Could not load rooms: ${error instanceof Error ? error.message : String(error)}. Retrying in ${(retryInMs / 1000).toFixed(1)} s…`
   })
   const offJoin = lobby.on('join', () => {
     root.hidden = true

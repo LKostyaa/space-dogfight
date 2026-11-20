@@ -1,0 +1,20 @@
+# Render Blueprint (https://render.com/docs/blueprint-spec): one web service from the GHCR image.
+# The deploy workflow (.github/workflows/deploy.yml) pushes the image and calls the deploy hook.
+services:
+  - type: web
+    name: space-dogfight
+    runtime: image
+    image:
+      url: ghcr.io/lkostyaa/space-dogfight:latest
+    plan: free
+    region: frankfurt
+    healthCheckPath: /ready
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://space-dogfight.onrender.com
+      - key: TRUST_PROXY
+        value: 'true'
+      - key: LOG_LEVEL
+        value: info
+      - key: MAX_CONNECTIONS_PER_IP
+        value: '8'

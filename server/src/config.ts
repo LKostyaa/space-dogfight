@@ -21,6 +21,16 @@ export const ServerConfigSchema = z.object({
   MAX_PAYLOAD: int(4096, 64),
   MSG_RATE: int(60, 1), // 30 inputs/s + chat + pings
   MSG_BURST: int(120, 1),
+  /** comma-separated, e.g. "https://dogfight.example.com". Empty = only localhost origins (dev). */
+  ALLOWED_ORIGINS: z
+    .string()
+    .default('')
+    .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean))
+    .pipe(z.array(z.string().url())),
+  MAX_CONNECTIONS_PER_IP: int(8, 1),
+  /** behind a reverse proxy (Render, Fly, Caddy) the client IP is in X-Forwarded-For */
+  TRUST_PROXY: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 })
 
 export type ServerConfig = Readonly<{
@@ -33,6 +43,10 @@ export type ServerConfig = Readonly<{
   maxPayload: number
   msgRate: number
   msgBurst: number
+  allowedOrigins: readonly string[]
+  maxConnectionsPerIp: number
+  trustProxy: boolean
+  logLevel: string
 }>
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
@@ -52,5 +66,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     maxPayload: c.MAX_PAYLOAD,
     msgRate: c.MSG_RATE,
     msgBurst: c.MSG_BURST,
+    allowedOrigins: c.ALLOWED_ORIGINS,
+    maxConnectionsPerIp: c.MAX_CONNECTIONS_PER_IP,
+    trustProxy: c.TRUST_PROXY,
+    logLevel: c.LOG_LEVEL,
   })
 }

@@ -11,6 +11,8 @@ import type { Controls } from '@dogfight/shared/sim/ship.ts'
 const BLOCK = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'])
 
 export interface Input {
+  /** on-screen buttons press the same virtual keys as the keyboard */
+  setKey(code: string, down: boolean): void
   isDown(code: string): boolean
   justPressed(code: string): boolean
   endStep(): void
@@ -40,6 +42,11 @@ export function createInput(target: Window = window): Input {
   target.addEventListener('blur', onBlur)
 
   return {
+    setKey(code, isDown) {
+      if (isDown && !down.has(code)) pressed.add(code)
+      if (isDown) down.add(code)
+      else down.delete(code)
+    },
     isDown: (code) => down.has(code),
     justPressed: (code) => pressed.has(code),
     endStep: () => pressed.clear(),

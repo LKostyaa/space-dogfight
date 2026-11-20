@@ -1,7 +1,7 @@
 import type { Connection } from '../net/connection.ts'
 
 /** Chat box + roster notices. Talks to the Connection only through events and send(). */
-export function mountChat(root: HTMLElement, conn: Connection): { add(text: string, cls?: string): void } {
+export function mountChat(root: HTMLElement, conn: Connection): { add(text: string, cls?: string): void; destroy(): void } {
   root.className = 'chat'
   const log = document.createElement('ul')
   log.id = 'chat-log'
@@ -36,8 +36,15 @@ export function mountChat(root: HTMLElement, conn: Connection): { add(text: stri
     }
     if (e.key === 'Escape') input.blur()
   })
-  window.addEventListener('keydown', (e) => {
+  const focus = (e: KeyboardEvent): void => {
     if (e.key === 'Enter' && document.activeElement !== input) input.focus()
-  })
-  return { add }
+  }
+  window.addEventListener('keydown', focus)
+  return {
+    add,
+    destroy() {
+      window.removeEventListener('keydown', focus)
+      root.replaceChildren()
+    },
+  }
 }

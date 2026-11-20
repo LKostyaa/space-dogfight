@@ -2,25 +2,116 @@
 
 [![CI](https://github.com/LKostyaa/space-dogfight/actions/workflows/ci.yml/badge.svg)](https://github.com/LKostyaa/space-dogfight/actions/workflows/ci.yml)
 
-Мультиплеєрна 2D-гра в браузері: космічні кораблі літають по арені, стріляють і ухиляються від астероїдів.
-Проєкт курсу «JavaScript програмування» (Р. І. Малькевич), кожна лабораторна — окремий тег `lab-NN`.
-
-## Запуск
-
-```bash
-npm install
-npm run dev:server   # ігровий сервер на :3000
-npm run dev:client   # Vite на http://localhost:5173 (проксі /api і /ws на :3000)
-```
-
-Продакшн-режим локально: `npm run build && npm start` → http://localhost:3000
-
-Керування: ← → (або A/D) — поворот, ↑ (W) — тяга, пробіл — постріл, Enter — чат.
-Netgraph: N — показати/сховати, `[` `]` — затримка інтерполяції, L / J / D — штучні затримка, джитер, втрати.
+**Мультиплеєрний космічний догфайт у браузері.** Авторитетний сервер на Node.js (30 Гц), передбачення
+на клієнті, бінарний протокол, TypeScript від клієнта до сервера. Можна встановити на телефон як PWA.
 
 ![Два гравці, 100±30 мс затримки, 2 % втрат](docs/img/lab5-two-players.gif)
 
+| | |
+|---|---|
+| ▶ **Грати** | **https://space-dogfight.onrender.com** <!-- TODO: замінити на реальну адресу після деплою --> |
+| 🎬 **Демо-відео (3–5 хв)** | *TODO: посилання на відео* |
+| 📈 **Метрики** | `/metrics` (Prometheus), `/api/stats` (JSON), `/health`, `/ready` |
+
+## Як грати
+
+Відкрийте посилання, введіть ім'я, оберіть кімнату. **← →** (A/D) — поворот, **↑** (W) — тяга, **пробіл** —
+постріл, **Enter** — чат. На телефоні — кнопки на екрані. Бонуси: 🛡 щит, ⚡ швидкострільність, ◎ самонавідні
+кулі. +3 очки за корабель, +1 за астероїд. **N** — netgraph (RTT, корекції, трафік).
+
+Запустити локально (Node ≥ 22.18):
+
+```bash
+npm install
+npm run build
+npm start            # http://localhost:3000
+```
+
+Розробка: `npm run dev:server` + `npm run dev:client` (Vite, http://localhost:5173). Тести: `npm test`, `npm run e2e`.
+Продакшн-образ: `GIT_SHA=$(git rev-parse HEAD) docker compose up --build`.
+
+## Архітектура
+
+```mermaid
+flowchart LR
+  subgraph Browser["client/ (Vite, TypeScript)"]
+    input[input 30 Hz] --> predict[prediction<br/>stepShipState]
+    predict --> render[canvas render<br/>60+ fps, interpolation]
+    snapshots[snapshot buffer<br/>interp 100 ms] --> render
+    reconcile[reconcile] --> predict
+  end
+  subgraph Shared["shared/ (deterministic sim + protocol)"]
+    sim[World, Ship, …<br/>seeded RNG]
+    proto[zod schemas<br/>binary codec]
+  end
+  subgraph Server["server/ (Node, one process)"]
+    ws[ws: Origin check,<br/>rate limit, per-IP cap] --> match[Match per room<br/>30 Hz authoritative]
+    match --> encode[encode snapshot once<br/>patch ack per client]
+    match --> logs[pino logs · NDJSON match logs]
+    metrics[/metrics /health /ready/]
+  end
+  input -- "input 6 B (seq, buttons)" --> ws
+  encode -- "snapshot ~500 B, ack" --> snapshots
+  snapshots --> reconcile
+  Shared -.imported by.-> Browser
+  Shared -.imported by.-> Server
+```
+
+- **Протокол:** WebSocket; керувальні повідомлення — JSON (zod), гарячі — бінарні через `DataView`
+  ([docs/protocol.md](docs/protocol.md)). Вхід — 6 байтів, знімок для 4 гравців — ~500 байтів (JSON — 4.9 КБ).
+- **Ігровий цикл:** сервер 30 Гц з абсолютним таймером; клієнт симулює теж 30 Гц, малює з частотою екрана.
+- **Netcode:** свій корабель передбачається і звіряється з сервером (корекції ~0.01 px), чужі сутності
+  інтерполюються зі зсувом 100 мс у минуле, свої кулі з'являються одразу.
+
+## Вимірювання (зведено з лаб)
+
+| Що | Результат | Де |
+|---|---|---|
+| Фіксований крок vs змінний при 6× CPU throttle | траєкторії збігаються / розходяться на 6 px | [Лаб 1](#лаб-1-event-loop--це-і-є-ігровий-цикл) |
+| Завантаження ресурсів: `Promise.all` vs послідовно | 315 мс vs 1240 мс | [Лаб 3](#лаб-3-асинхронний-javascript-promises-asyncawait-і-екран-завантаження) |
+| RSS при стрімінгу 200 МБ реплею | 63–91 МБ (`pipeline`) vs 250 МБ (`readFile`) | [Лаб 4](#лаб-4-nodejs-eventemitter-streams-websocket-сервер) |
+| Затримка «натиснув → побачив» при 100 мс | 31 мс з передбаченням, 331 мс без | [Лаб 5](#лаб-5-сервер-рахує-гру-передбачення-звірка-і-бінарний-протокол) |
+| JSON vs бінарний, 4 гравці, 30 Гц | 144.7 KB/s vs 14.6 KB/s на клієнта | [Лаб 5](#лаб-5-сервер-рахує-гру-передбачення-звірка-і-бінарний-протокол) |
+| Тік сервера p99, 64 гравці в одній кімнаті | 4.69 → 2.28 мс після оптимізацій | [Лаб 7](#лаб-7-v8-память-і-тести) |
+| Місткість одного процесу | 248 гравців при ELU 17 % (межа — 1-байтовий id і трафік) | [Лаб 7](#лаб-7-v8-память-і-тести) |
+| SIGTERM → вихід | 7 мс, код 0; клієнти отримують 1001 за 11 мс | [Лаб 8](#лаб-8-публікуємо-гру-docker-метрики-і-жива-адреса) |
+| Флуд сміттям ~1000 кадрів/с | tick p99 сусідньої кімнати 0.60 → 0.45 мс (не зріс) | [Лаб 8](#лаб-8-публікуємо-гру-docker-метрики-і-жива-адреса) |
+| Реальні гравці з різних мереж | *TODO: RTT двох гравців* | [Лаб 8](#лаб-8-публікуємо-гру-docker-метрики-і-жива-адреса) |
+
+## Обмеження і чому
+
+- **Один процес.** Кімната живе в пам'яті одного процесу, тож горизонтально не масштабується без sticky-сесій або
+  Redis. Одного процесу вистачає на ~250 гравців (див. місткість).
+- **Не більше 254 гравців на процес** — id гравця займає 1 байт на дроті. Свідомий вибір, щоб зекономити трафік.
+- **Інтерполяція = 100 мс у минулому.** Чужі кораблі видно трохи запізно, а компенсації затримки при влучанні
+  (lag compensation) немає: стріляти треба з невеликим упередженням.
+- **Тунелювання.** Куля (21 px за крок) може проскочити дуже малу ціль — покрито тестом, свіп-колізії не робив.
+- **Major GC на клієнті** (2–3 за 30 с, ~4 мс кожен) лишились: декодування знімків створює ~1000 об'єктів/с.
+- **Безкоштовний тариф Render** засинає без трафіку: перший гравець чекає ~30 с, поки контейнер прокинеться.
+
+## Що б я робив далі
+
+1. Дельта-знімки (лише змінені сутності) — у профілі сервера тепер домінує `writev`.
+2. Lag compensation: сервер перевіряє влучання в минулому стані світу, який бачив стрілець.
+3. Sticky routing за id кімнати (Caddy/nginx hash) → кілька процесів; далі Redis pub/sub, щоб кімната жила на кількох.
+4. Матчмейкінг і акаунти; декодування знімків у пул об'єктів (нуль major GC).
+
+## Історія тегів
+
+| Тег | Що з'явилося |
+|---|---|
+| `lab-01` | ігровий цикл з фіксованим кроком, корабель, експерименти з event loop |
+| `lab-02` | сутності, `World` на `Map`, колізії, бонуси через композицію |
+| `lab-03` | завантаження з retry/abort, спрайти, Web Audio, шина подій, лобі |
+| `lab-04` | Node-сервер: кімнати, WebSocket, логи матчів через streams, ліміти |
+| `lab-05` | авторитетний сервер, передбачення, звірка, інтерполяція, бінарний протокол |
+| `lab-06` | TypeScript скрізь, zod-протокол, типізовані події |
+| `lab-07` | 88 тестів, e2e, CI, профілювання, боти, навантажувальний тест |
+| `lab-08`, `v1.0.0` | продакшн: SIGTERM, health/ready/metrics, Docker, деплой за тегом, PWA |
+
 ---
+
+# Журнал лабораторних
 
 ## Лаб 1. Event loop — це і є ігровий цикл
 
@@ -636,3 +727,108 @@ major GC немає; у грі за 90 с їх 3 → 7 → 8 у кожних 30 
 на клієнта, 3.8 MB/s (~30 Мбіт/с) на 248 гравців. При лінійній екстраполяції ELU сягнув би 100 % приблизно на
 1400 гравцях. В одній щільній кімнаті на 64 гравці tick p99 — 2.3 мс, але трафік уже 89 KB/s на клієнта:
 кожен отримує ~350 сутностей 30 разів на секунду.
+
+---
+
+## Лаб 8. Публікуємо гру: Docker, метрики і жива адреса
+
+### M1 — процес, готовий до продакшну
+
+- **SIGTERM** → `server.close()` → кожному клієнту `shutdown` і закриття з кодом **1001** → зупинка логів матчів
+  (pipeline дописує файл) → `exit(0)`. Додатково жорсткий дедлайн 8 с (`exit(1)`), щоб ніколи не перевищити 10 с
+  на `docker stop`. Виміряно: **вихід за 7 мс з кодом 0**; три підключені клієнти отримали `shutdown` і 1001
+  за 11 мс.
+- **`/health`** (liveness: процес відповідає, `version` = git SHA збірки, `uptime`) і **`/ready`**
+  (readiness: сервер слухає порт і не завершується; під час shutdown — `503`).
+- **Падіння на невідомому:** `uncaughtException` / `unhandledRejection` → `logger.fatal` зі стеком → `exit(1)`;
+  платформа піднімає чистий процес. Перевірено: кинутий `Error('boom…')` → лог `process.uncaught_exception`, код 1.
+- **Логи — JSON-рядки через pino** у stdout, з полями `roomId`, `playerId`, `ip`, `version`; рівень — `LOG_LEVEL`.
+  Пишуться події, а не прозові повідомлення: `room.created`, `player.joined`, `player.left`, `ws.rejected {reason}`,
+  `ws.closed_by_server {reason}`, `server.shutdown_done {ms}`. Паролі, токени й повні повідомлення клієнтів у лог не потрапляють
+  (`redact`).
+
+  ```json
+  {"level":30,"service":"dogfight","version":"c5fac45d1a2b","ip":"127.0.0.1","roomId":"alpha","playerId":2,"codec":"binary","msg":"player.joined"}
+  {"level":40,"service":"dogfight","version":"c5fac45d1a2b","origin":"https://evil.example","reason":"origin","msg":"ws.rejected"}
+  ```
+- **`/metrics`** у форматі Prometheus (написаний вручну, `server/src/metrics.ts`): гравці, боти, кімнати, з'єднання,
+  повідомлення і байти (лічильники `_total` + `*_per_second` між зчитуваннями), **tick p99 по кімнатах**, зайнятість
+  циклу подій, RSS, **відмови за причиною** (`origin`, `ip_cap`, `rate_limit`, `bad_message`, `join_timeout`,
+  `room_full`, `server_full`, `too_slow`).
+
+  ```text
+  dogfight_players 3
+  dogfight_bytes_per_second{dir="out"} 1701.79
+  dogfight_tick_seconds{room="alpha",quantile="0.99"} 0.00149
+  dogfight_event_loop_utilization 0.0046
+  dogfight_rss_bytes 104841216
+  dogfight_rejected_total{reason="origin"} 1
+  dogfight_rejected_total{reason="ip_cap"} 2
+  ```
+- **Версія** (git SHA, `ARG GIT_SHA` у Dockerfile) — у `/health` і в HUD гри (`v…`).
+- **Конфіг через zod** (`server/src/config.ts`): `ALLOWED_ORIGINS`, `MAX_CONNECTIONS_PER_IP`, `MAX_ROOMS`,
+  `MAX_PLAYERS_PER_ROOM`, `TRUST_PROXY`, `LOG_LEVEL`… Документація змінних — `.env.example`; `.env` у `.gitignore`.
+  Секретів зараз немає; якщо з'являться (наприклад `SENTRY_DSN`) — лише в налаштуваннях платформи.
+
+### M2 — захист
+
+- **Origin на рукостисканні** (`verifyClient` у `ws.ts`): CORS на WebSocket не діє, тож без перевірки будь-який сайт
+  міг би підключити своїх відвідувачів до нашого сервера. Чужий `Origin` → **403** (перевірено, пише `ws.rejected`).
+  Клієнти без `Origin` (скрипти) пропускаються: зупиняти їх Origin однаково не може — для цього є ліміти.
+- **Ліміт з'єднань з однієї IP** (8 за замовчуванням; за проксі IP береться з `X-Forwarded-For` при `TRUST_PROXY=true`):
+  9-те з'єднання → **429**.
+- Ліміти з Лаб 4 (розмір повідомлення, token bucket, таймаут `join`, повільний клієнт) лишились і перевірені
+  навантажувальним скриптом з Лаб 7.
+
+**Хаос-тести** (`server/scripts/chaos.ts` + браузерний сценарій):
+
+| Сценарій | Що сталося |
+|---|---|
+| клієнт зник посеред матчу (`terminate()`, без close-фрейму) | сервер побачив закриття TCP, гравців у кімнаті 2 → 1, лог `player.left code 1006` |
+| сервер убито посеред матчу (SIGTERM) | гравець **за 29 мс** опинився в лобі з повідомленням «The server is restarting… Pick a room to jump back in»; поки сервера немає, лобі повторює запит з backoff («Retrying in 3.6 s…»); після перезапуску кімнати з'явились за 3.3 с, повторний вхід працює |
+| клієнт шле ~1000 битих кадрів/с (11 с, 1335 з'єднань) | кожне з'єднання закрито `4000`, залоговано й пораховано — `rejected_total{reason="bad_message"} 1335`; **tick p99 сусідньої кімнати** (7 ботів + гравець): **0.60 мс спокійно → 0.45 мс під атакою** — ізоляція доведена метрикою |
+
+![Лобі після перезапуску сервера](docs/img/lab8-server-restart.png)
+
+Знахідка: кадри, які вже були в дорозі до закритого сокета, рахувались і логувались повторно (10 разів на одне
+з'єднання). Тепер є прапорець `closing` — один поганий клієнт = одна відмова й один рядок у лозі.
+
+### M3 — контейнер і пайплайн
+
+- **`Dockerfile` у два етапи:** stage 1 (`node:24-alpine`) — `npm ci` усього workspace, `vite build` клієнта;
+  stage 2 — чистий `node:24-alpine`, лише `npm ci --omit=dev`, сирці сервера й `shared/` (Node виконує TypeScript
+  сам — type stripping, без компілятора в образі) і `client/dist`. `NODE_ENV=production`, **`USER node`** (не root),
+  **`CMD ["node", "server/src/index.ts"]`** у exec-формі (з `npm start` SIGTERM отримав би npm, а не Node),
+  **`HEALTHCHECK`** на `/health`. Порядок шарів: спершу `package*.json` і встановлення залежностей, потім код —
+  зміна коду не перезбирає `node_modules`. `.dockerignore` відкидає `node_modules`, `.git`, логи, `docs/`.
+- **`docker-compose.yml`** — локальний запуск у продакшн-режимі (`stop_grace_period: 10s`).
+- **CI** (`ci.yml`) на кожен push: typecheck → lint → тести → coverage → build → e2e.
+- **Деплой за тегом** (`deploy.yml`): на тег `v*` → збірка образу з `GIT_SHA` → push у **GHCR**
+  (`ghcr.io/lkostyaa/space-dogfight:<тег>` і `:latest`) → deploy hook **Render** (`render.yaml` — опис сервісу,
+  health check `/ready`, `TRUST_PROXY=true`, Frankfurt) → крок чекає, поки `/health` живої адреси не покаже SHA цього коміту.
+- TLS термінує edge Render, тому з публічної сторінки клієнт підключається лише через **`wss://`** (`wsUrl()` бере протокол
+  зі сторінки). Проксі Render закриває «тихі» з'єднання — їх тримає heartbeat кожні 15 с з Лаб 4;
+  `keepAliveTimeout` HTTP-сервера 65 с — більше, ніж idle timeout проксі.
+
+### M4 — запуск
+
+- **PWA:** `manifest.webmanifest`, іконки 192/512 (+ maskable), service worker (`public/sw.js`: network-first, API і
+  WebSocket не кешуються), `display: fullscreen`, `orientation: landscape`. На телефоні — сенсорні кнопки
+  (`ui/touch.ts`, лише для `pointer: coarse`).
+- README переписано як сторінку продукту (угорі): GIF, посилання, як грати, схема, усі вимірювання, місткість,
+  обмеження з причинами, наступні кроки, історія тегів.
+
+### Що лишилося зробити вручну
+
+Це не можна зробити з репозиторію — потрібні ваші акаунти й живі люди:
+
+1. **Задеплоїти:** зробити пакет GHCR публічним (GitHub → Packages → space-dogfight → Package settings → Public);
+   створити на render.com Web Service з образу `ghcr.io/lkostyaa/space-dogfight:latest` (або Blueprint з `render.yaml`);
+   скопіювати його **Deploy Hook** у секрет репозиторію `RENDER_DEPLOY_HOOK_URL`, а адресу сервісу — у змінну `APP_URL`;
+   прописати свою адресу в `ALLOWED_ORIGINS`. Після цього `git tag v1.0.1 && git push --tags` деплоїть автоматично.
+2. **Розмір образу:** `docker images space-dogfight` (очікується < 200 МБ: Node alpine + ~10 МБ залежностей) — вписати сюди.
+3. **Двоє людей з інших мереж** грають одночасно: записати GIF/відео і їхній RTT з netgraph (клавіша N) у таблицю
+   «Вимірювання» вгорі.
+4. **Uptime-монітор** (наприклад UptimeRobot, безкоштовно) на `https://…/health` кожну хвилину з email-сповіщенням.
+5. **Встановити на телефон** (Chrome → «Додати на головний екран») і перевірити.
+6. **Демо-відео 3–5 хв** і посилання на нього вгорі README.

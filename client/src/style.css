@@ -109,3 +109,30 @@ button:disabled {
   color: inherit;
   border-radius: 6px;
 }
+.notice {
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #3a2a10;
+  color: #ffd58a;
+}
+.touch {
+  position: fixed;
+  inset: auto 0 16px 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+  pointer-events: none;
+  touch-action: none;
+}
+.touch-btn {
+  pointer-events: auto;
+  width: 64px;
+  height: 64px;
+  margin: 0 6px;
+  border-radius: 50%;
+  font-size: 26px;
+  background: rgba(43, 123, 214, 0.35);
+  border: 1px solid rgba(94, 200, 255, 0.6);
+  user-select: none;
+}

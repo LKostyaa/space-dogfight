@@ -9,7 +9,7 @@ import { beginFrame, endFrame, drawEntity, drawHud } from './render/draw.ts'
 import { drawLoading, type LoadingState } from './render/loading.ts'
 import { drawNetgraph } from './render/netgraph.ts'
 import { createSprites, type SpriteFrame } from './render/sprites.ts'
-import { loadAll, loadSequential, loadImage, loadAudio, loadJson, type LoadItem, type LoadResult } from './assets/loader.ts'
+import { loadAll, loadSequential, loadImage, loadAudio, loadJson, fetchJson, type LoadItem, type LoadResult } from './assets/loader.ts'
 import { createAudio, type SoundName } from './audio/audio.ts'
 import { createHud } from './ui/hud.ts'
 import { Lobby, type RoomInfo } from './ui/lobby.ts'
@@ -18,6 +18,7 @@ import { Connection, wsUrl } from './net/connection.ts'
 import { createLagger } from './net/latency.ts'
 import { NetGame, type ClientEvents } from './net/netgame.ts'
 import { mountChat } from './ui/chat.ts'
+import { mountTouchControls } from './ui/touch.ts'
 import { measure, perfReport, resetPerf } from './perf.ts'
 
 // URL flags:
@@ -83,7 +84,11 @@ async function loadAssets(): Promise<LoadResult & { manifest: Manifest }> {
   return { ...result, manifest }
 }
 
-function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, room: RoomInfo, name: string): void {
+let serverVersion = '?'
+const HealthSchema = z.object({ version: z.string() })
+
+/** Starts a match; returns when the connection is lost via `onLeave(reason)`. */
+function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, room: RoomInfo, name: string, onLeave: (notice: string) => void): void {
   for (const s of SOUNDS) {
     const buf = assets.get(`sfx:${s}`)
     audio.add(s, buf instanceof AudioBuffer ? buf : null)
@@ -91,6 +96,7 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
   const img = assets.get('sprites')
   const sprites = createSprites(img instanceof HTMLImageElement ? img : null, manifest.sheet)
   const input = createInput(window)
+  const unmountTouch = mountTouchControls(input)
   const codec = params.get('codec') === 'json' ? 'json' : 'binary'
   const lagger = createLagger({ lag: num('lag', 0), jitter: num('jitter', 0), drop: num('drop', 0) })
   let showNetgraph = params.get('netgraph') !== '0'
@@ -106,14 +112,14 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
     predict: params.get('predict') !== '0',
     breakDeterminism: params.get('breakdet') === '1',
   })
-  mountChat(byId('chat', HTMLDivElement), conn)
+  const chat = mountChat(byId('chat', HTMLDivElement), conn)
   const hud = createHud(bus, (id) => game.players.get(id)?.name)
   audio.listen(bus, () => game.myId)
   conn.connect()
 
   // live netcode controls
   const LAGS = [0, 50, 100, 200]
-  window.addEventListener('keydown', (e) => {
+  const onKey = (e: KeyboardEvent): void => {
     if (document.activeElement instanceof HTMLInputElement) return
     if (e.key === ']') game.interpDelay += 10
     if (e.key === '[') game.interpDelay = Math.max(0, game.interpDelay - 10)
@@ -121,7 +127,8 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
     if (e.code === 'KeyL') lagger.settings.lag = LAGS[(LAGS.indexOf(lagger.settings.lag) + 1) % LAGS.length] ?? 0
     if (e.code === 'KeyJ') lagger.settings.jitter = lagger.settings.jitter ? 0 : 30
     if (e.code === 'KeyD') lagger.settings.drop = lagger.settings.drop ? 0 : 2
-  })
+  }
+  window.addEventListener('keydown', onKey)
 
   const IDLE = { left: false, right: false, thrust: false, fire: false }
   let lastRender = performance.now()
@@ -144,7 +151,7 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
       })
       drawHud(ctx, [
         `${room.name} — sim ${stats.stepsPerSecond}/s  frames ${stats.framesPerSecond}/s`,
-        `score ${game.myScore}  hp ${game.myShip?.hp ?? '-'}  players ${game.players.size}`,
+        `score ${game.myScore}  hp ${game.myShip?.hp ?? '-'}  players ${game.players.size}  v${serverVersion}`,
         ...hud.lines(),
       ])
       if (showNetgraph) drawNetgraph(ctx, view, game, lagger.settings, codec)
@@ -152,6 +159,27 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
   })
   loop.start()
   Object.assign(window, { __loop: loop, __game: game, __conn: conn, __lagger: lagger, __perf: { report: perfReport, reset: resetPerf } })
+
+  // Server restarted (shutdown + 1001), network dropped (1006) or we were kicked (4xxx):
+  // stop the match and go back to the lobby with a clear message. The lobby retries with backoff.
+  let left = false
+  const leave = (notice: string): void => {
+    if (left) return
+    left = true
+    loop.stop()
+    conn.close()
+    game.destroy()
+    input.destroy()
+    unmountTouch()
+    chat.destroy()
+    window.removeEventListener('keydown', onKey)
+    onLeave(notice)
+  }
+  conn.on('shutdown', () => leave('The server is restarting (new version). Pick a room to jump back in.'))
+  conn.on('close', ({ code, reason }) => {
+    if (code === 1000) return
+    leave(code >= 4000 ? `Disconnected by the server: ${reason || code}.` : 'Connection lost. Pick a room to rejoin when the server is back.')
+  })
 }
 
 async function boot(): Promise<void> {
@@ -165,14 +193,22 @@ async function boot(): Promise<void> {
     retryBtn.hidden = false
     return
   }
+  fetchJson('/health')
+    .then((h) => (serverVersion = HealthSchema.parse(h).version))
+    .catch(() => {})
   const lobby = new Lobby()
-  const off = lobby.on('join', ({ room, name }) => {
-    off()
-    startGame(loaded, room, name)
-  })
-  mountLobbyView(byId('lobby', HTMLDivElement), lobby, { warnings: loaded.errors.map((e) => `${e.key}: ${e.message} — fallback used`) })
-  lobby.enter()
+  const showLobby = (notice = '', name = ''): void => {
+    mountLobbyView(byId('lobby', HTMLDivElement), lobby, { warnings: loaded.errors.map((e) => `${e.key}: ${e.message} — fallback used`), notice, name })
+    lobby.enter()
+  }
+  lobby.on('join', ({ room, name }) => startGame(loaded, room, name, (notice) => showLobby(notice, name)))
+  showLobby()
   Object.assign(window, { __lobby: lobby })
+}
+
+// PWA: installable + offline shell. Not on localhost, so dev reloads are never served from a stale cache.
+if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+  navigator.serviceWorker.register('/sw.js').catch((e: unknown) => console.warn('service worker', e))
 }
 
 retryBtn.addEventListener('click', () => void boot())

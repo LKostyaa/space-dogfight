@@ -1,0 +1,15 @@
+# Production-like local run:  GIT_SHA=$(git rev-parse HEAD) docker compose up --build
+services:
+  game:
+    build:
+      context: .
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
+    ports:
+      - '3000:3000'
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3000
+      LOG_LEVEL: info
+      MAX_CONNECTIONS_PER_IP: '8'
+    stop_grace_period: 10s
+    restart: unless-stopped

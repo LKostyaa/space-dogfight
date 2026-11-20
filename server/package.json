@@ -13,7 +13,8 @@
   "dependencies": {
     "@dogfight/shared": "*",
     "ws": "^8.18.0",
-    "zod": "^3.25.0"
+    "zod": "^3.25.0",
+    "pino": "^9.6.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",

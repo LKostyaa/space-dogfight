@@ -13,50 +13,60 @@ export type RoomInfo = z.infer<typeof RoomInfoSchema>
 
 export interface LobbyEvents {
   rooms: { rooms: readonly RoomInfo[] }
-  error: { error: unknown }
+  error: { error: unknown; retryInMs: number }
   join: { room: RoomInfo; name: string }
 }
 
 /**
- * Lobby model: knows nothing about the DOM. It fetches the room list on an
- * interval while visible and reports through typed events (rooms / error / join).
- * leave() aborts the in-flight request and stops polling — no orphaned fetches.
+ * Lobby model: knows nothing about the DOM. While visible it polls the room
+ * list (every `intervalMs`; after failures with exponential backoff up to
+ * `maxBackoffMs` — e.g. while the server restarts) and reports through typed
+ * events. leave() aborts the in-flight request and stops polling.
  */
 export class Lobby extends Bus<LobbyEvents> {
   #controller: AbortController | null = null
   #timer = 0
+  #failures = 0
   readonly url: string
   readonly intervalMs: number
   readonly timeoutMs: number
+  readonly maxBackoffMs: number
   rooms: RoomInfo[] = []
 
-  constructor({ url = '/api/rooms', intervalMs = 3000, timeoutMs = 2500 } = {}) {
+  constructor({ url = '/api/rooms', intervalMs = 3000, timeoutMs = 2500, maxBackoffMs = 8000 } = {}) {
     super()
     this.url = url
     this.intervalMs = intervalMs
     this.timeoutMs = timeoutMs
+    this.maxBackoffMs = maxBackoffMs
   }
 
   async refresh(): Promise<void> {
-    if (!this.#controller) return
-    const signal = AbortSignal.any([this.#controller.signal, AbortSignal.timeout(this.timeoutMs)])
+    const controller = this.#controller
+    if (!controller) return
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(this.timeoutMs)])
+    let next = this.intervalMs
     try {
       this.rooms = z.array(RoomInfoSchema).parse(await fetchJson(this.url, { signal }))
+      this.#failures = 0
       this.emit('rooms', { rooms: this.rooms })
     } catch (error: unknown) {
-      if (this.#controller?.signal.aborted) return // we left: not an error
-      this.emit('error', { error })
+      if (controller.signal.aborted) return // we left: not an error
+      next = Math.min(this.maxBackoffMs, 500 * 2 ** this.#failures++) * (0.5 + Math.random() / 2)
+      this.emit('error', { error, retryInMs: next })
     }
+    if (this.#controller === controller) this.#timer = window.setTimeout(() => void this.refresh(), next)
   }
 
   enter(): void {
+    this.leave()
     this.#controller = new AbortController()
+    this.#failures = 0
     void this.refresh()
-    this.#timer = window.setInterval(() => void this.refresh(), this.intervalMs)
   }
 
   leave(): void {
-    window.clearInterval(this.#timer)
+    window.clearTimeout(this.#timer)
     this.#controller?.abort(new DOMException('left lobby', 'AbortError'))
     this.#controller = null
   }

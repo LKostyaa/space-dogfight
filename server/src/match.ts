@@ -55,7 +55,7 @@ export interface MatchPlayer {
 export type BroadcastSnapshot = (snapshot: WorldSnapshot, players: Iterable<MatchPlayer>) => void
 
 interface Logger {
-  warn(msg: string): void
+  warn(obj: object, msg?: string): void
 }
 
 /**
@@ -146,7 +146,7 @@ export class Match {
     this.#nextAt += TICK_MS
     let delay = this.#nextAt - performance.now()
     if (delay < -TICK_MS * 5) {
-      this.log?.warn(`room ${this.room.id}: fell ${(-delay).toFixed(0)} ms behind, resetting clock`)
+      this.log?.warn({ behindMs: Math.round(-delay) }, 'match.fell_behind')
       this.#nextAt = performance.now() + TICK_MS
       delay = TICK_MS
     }
