@@ -1,4 +1,6 @@
 import { WebSocketServer } from 'ws'
+import { getCodec, CodecError } from '@dogfight/shared/codec/index.js'
+import { TICK_RATE } from '@dogfight/shared/sim/constants.js'
 import { validateClientMessage, encode, Close } from './protocol.js'
 import { createTokenBucket } from './ratelimit.js'
 
@@ -10,10 +12,10 @@ let nextPlayerId = 1
 
 /**
  * WebSocket connection lifecycle:
- *   connect -> must send `join` within 5 s -> in a room -> close.
+ *   connect -> must send `join` within 5 s -> in a room (match) -> close.
  * Every message is validated; bad ones close the socket with a code.
  */
-export function attachWebSocket(server, { rooms, config, log = console }) {
+export function attachWebSocket(server, { rooms, config, log = console, stats = { bytesOut: 0, bytesIn: 0, messagesIn: 0 } }) {
   const wss = new WebSocketServer({ server, path: '/ws', maxPayload: config.maxPayload })
 
   // Heartbeat: ping everyone every 15 s; two missed pongs -> terminate.
@@ -37,6 +39,7 @@ export function attachWebSocket(server, { rooms, config, log = console }) {
       if (!critical) return
       if (ws.bufferedAmount > SLOW_CLIENT_BYTES * 4) return ws.close(Close.TOO_SLOW, 'too slow')
     }
+    stats.bytesOut += typeof data === 'string' ? Buffer.byteLength(data) : data.byteLength
     ws.send(data)
   }
 
@@ -44,12 +47,21 @@ export function attachWebSocket(server, { rooms, config, log = console }) {
     for (const p of room.players.values()) send(p.socket, data, opts)
   }
 
+  /** Called by a room's Match every tick for every player. */
+  function sendSnapshot(player, snapshot) {
+    if (!player.socket) return // bots have no socket
+    send(player.socket, getCodec(player.codec).encodeSnapshot(snapshot), { critical: false })
+  }
+
+  function rosterOf(room) {
+    return room.roster().map((p) => ({ ...p, color: room.match?.players.get(p.id)?.ship.color }))
+  }
+
   function joinRoom(ws, msg) {
     let room = rooms.get(msg.room)
     if (!room) {
       try {
         room = rooms.create({ id: msg.room, name: msg.room })
-        wireRoom(room)
       } catch {
         return ws.close(Close.SERVER_FULL, 'server full')
       }
@@ -57,15 +69,18 @@ export function attachWebSocket(server, { rooms, config, log = console }) {
     if (room.full) return ws.close(Close.ROOM_FULL, 'room full')
     clearTimeout(ws.joinTimer)
     ws.player = { id: nextPlayerId++, name: msg.name, socket: ws }
+    ws.codec = msg.codec ?? 'binary'
     ws.room = room
-    send(ws, encode('welcome', { playerId: ws.player.id, room: room.toJSON() }))
+    send(ws, encode('welcome', { playerId: ws.player.id, room: room.toJSON(), tickRate: TICK_RATE, codec: ws.codec }))
+    room.match.addPlayer({ id: ws.player.id, name: msg.name, codec: ws.codec, socket: ws })
     room.join(ws.player)
   }
 
   function wireRoom(room) {
     if (room.wired) return
     room.wired = true
-    const roster = () => broadcast(room, encode('roster', { players: room.roster() }))
+    room.match.onSend = sendSnapshot
+    const roster = () => broadcast(room, encode('roster', { players: rosterOf(room) }))
     room.on('join', roster)
     room.on('leave', roster)
     room.on('chat', (m) => broadcast(room, encode('chat', m), { critical: false }))
@@ -82,8 +97,22 @@ export function attachWebSocket(server, { rooms, config, log = console }) {
     ws.joinTimer = setTimeout(() => ws.close(Close.JOIN_TIMEOUT, 'join timeout'), JOIN_TIMEOUT_MS)
 
     ws.on('message', (data, isBinary) => {
+      stats.messagesIn++
+      stats.bytesIn += data.length
       if (!ws.bucket.take()) return ws.close(Close.RATE_LIMIT, 'rate limit')
-      if (isBinary) return ws.close(Close.BAD_MESSAGE, 'binary not supported in v0')
+
+      if (isBinary) {
+        if (!ws.player || ws.codec !== 'binary') return ws.close(Close.BAD_MESSAGE, 'unexpected binary')
+        try {
+          const ab = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+          return ws.room.match.queueInput(ws.player.id, getCodec('binary').decodeInput(ab))
+        } catch (e) {
+          if (!(e instanceof CodecError)) throw e
+          log.warn?.(`bad binary from ${ws.ip}: ${e.message}`)
+          return ws.close(Close.BAD_MESSAGE, e.message)
+        }
+      }
+
       const res = validateClientMessage(data.toString())
       if (!res.ok) {
         log.warn?.(`bad message from ${ws.ip}: ${res.reason}`)
@@ -95,8 +124,12 @@ export function attachWebSocket(server, { rooms, config, log = console }) {
         return joinRoom(ws, msg)
       }
       switch (msg.type) {
+        case 'input':
+          return ws.room.match.queueInput(ws.player.id, { seq: msg.seq, bits: msg.b })
         case 'chat':
           return ws.room.chat(ws.player.id, msg.text)
+        case 'ping':
+          return send(ws, encode('pong', { t: msg.t }))
         case 'leave':
           return ws.close(Close.NORMAL, 'bye')
         case 'join':
@@ -106,7 +139,10 @@ export function attachWebSocket(server, { rooms, config, log = console }) {
 
     ws.on('close', () => {
       clearTimeout(ws.joinTimer)
-      if (ws.player && ws.room) ws.room.leave(ws.player.id)
+      if (ws.player && ws.room) {
+        ws.room.match.removePlayer(ws.player.id)
+        ws.room.leave(ws.player.id)
+      }
     })
   })
 

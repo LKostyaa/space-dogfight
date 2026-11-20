@@ -23,7 +23,7 @@ export function loadConfig() {
     maxRooms: int('MAX_ROOMS', 20, { min: 1 }),
     maxPlayersPerRoom: int('MAX_PLAYERS_PER_ROOM', 8, { min: 1, max: 64 }),
     maxPayload: int('MAX_PAYLOAD', 4096, { min: 64 }),
-    msgRate: int('MSG_RATE', 30, { min: 1 }),
-    msgBurst: int('MSG_BURST', 60, { min: 1 }),
+    msgRate: int('MSG_RATE', 60, { min: 1 }), // 30 inputs/s + chat + pings
+    msgBurst: int('MSG_BURST', 120, { min: 1 }),
   })
 }

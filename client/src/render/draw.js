@@ -1,4 +1,4 @@
-import { ARENA } from '../sim/arena.js'
+import { ARENA } from '@dogfight/shared/sim/arena.js'
 
 export const lerp = (a, b, t) => a + (b - a) * t
 

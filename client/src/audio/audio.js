@@ -30,8 +30,8 @@ export function createAudio() {
       src.start()
     },
     /** Subscribe to the game's event bus. */
-    listen(bus, myShipId) {
-      bus.addEventListener('fired', (e) => e.detail.id === myShipId() && this.play('shoot'))
+    listen(bus, myPlayerId) {
+      bus.addEventListener('fired', (e) => e.detail.playerId === myPlayerId() && this.play('shoot'))
       bus.addEventListener('hit', () => this.play('hit'))
       bus.addEventListener('exploded', () => this.play('explosion'))
       bus.addEventListener('pickup', () => this.play('pickup'))

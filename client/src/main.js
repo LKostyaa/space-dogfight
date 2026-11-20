@@ -1,12 +1,11 @@
 import { createLoop } from './loop.js'
 import { createInput, readControls } from './input.js'
-import { ARENA } from './sim/arena.js'
-import { World } from './sim/world.js'
-import { Ship } from './sim/ship.js'
-import { Vector2 } from './sim/vector.js'
+import { ARENA } from '@dogfight/shared/sim/arena.js'
+import { DT } from '@dogfight/shared/sim/constants.js'
 import { setupCanvas } from './render/canvas.js'
 import { beginFrame, endFrame, drawEntity, drawHud } from './render/draw.js'
 import { drawLoading } from './render/loading.js'
+import { drawNetgraph } from './render/netgraph.js'
 import { createSprites } from './render/sprites.js'
 import { loadAll, loadSequential, loadImage, loadAudio, loadJson } from './assets/loader.js'
 import { createAudio } from './audio/audio.js'
@@ -14,17 +13,14 @@ import { createHud } from './ui/hud.js'
 import { Lobby } from './ui/lobby.js'
 import { mountLobbyView } from './ui/lobby-view.js'
 import { Connection, wsUrl } from './net/connection.js'
+import { createLagger } from './net/latency.js'
+import { NetGame } from './net/netgame.js'
 import { mountChat } from './ui/chat.js'
 
-// Test flags (README "Галерея збоїв"):
-//   ?missing=1    add a sprite that does not exist (404)
-//   ?slow=ms      every sound is served with a delay (needs the dev-server delay middleware)
-//   ?abort=ms     abort loading after ms
-//   ?badjson=1    load an arena with corrupt JSON
-//   ?sequential=1 load one by one instead of Promise.all (timing comparison)
-//   ?exp=...      Lab 1 loop experiments
+// URL flags:
+//   loading tests (Lab 3): ?missing=1 ?slow=ms ?abort=ms ?badjson=1 ?sequential=1
+//   netcode (Lab 5): ?codec=json|binary ?lag=ms ?jitter=ms ?drop=% ?interp=ms ?netgraph=0 ?predict=0 ?breakdet=1
 const params = new URLSearchParams(location.search)
-const exp = params.get('exp')
 const slow = params.get('slow')
 const withDelay = (url) => (slow ? `${url}?delay=${slow}` : url)
 
@@ -62,72 +58,73 @@ async function loadAssets() {
       paint()
     },
   })
-  const ms = performance.now() - t0
-  console.log(`assets loaded in ${ms.toFixed(0)} ms (${params.get('sequential') ? 'sequential' : 'Promise.all'})`)
-  window.__loadMs = ms
+  window.__loadMs = performance.now() - t0
   progress.errors = result.errors
   paint()
   return { manifest, ...result }
 }
 
 function startGame({ assets, manifest }, room, name) {
-  // Lab 4: the room is real (roster + chat over WebSocket); the match itself is still local until Lab 5.
-  const conn = new Connection(wsUrl(), { hello: () => ({ v: 0, type: 'join', room: room.id, name }) })
-  mountChat(document.getElementById('chat'), conn)
-  conn.connect()
-  window.__conn = conn
-  const arena = assets[`arena:${room.arena}`] ?? { asteroids: 5, pickups: 3, seed: 1 }
   for (const [k, buf] of Object.entries(assets)) if (k.startsWith('sfx:')) audio.add(k.slice(4), buf)
   const sprites = createSprites(assets.sprites, manifest.sheet)
   const input = createInput(window)
+  const codec = params.get('codec') === 'json' ? 'json' : 'binary'
+  const lagger = createLagger({ lag: +(params.get('lag') ?? 0), jitter: +(params.get('jitter') ?? 0), drop: +(params.get('drop') ?? 0) })
+  let showNetgraph = params.get('netgraph') !== '0'
 
-  const world = new World({ seed: arena.seed })
-  const me = world.spawn(new Ship({ pos: new Vector2(400, 450), angle: 0, playerId: 1, name }))
-  const dummy = world.spawn(
-    new Ship({ pos: new Vector2(1200, 450), angle: Math.PI, playerId: 2, name: 'dummy', color: '#ff8a65' }),
-  )
-  world.populate({ asteroids: arena.asteroids, pickups: arena.pickups })
+  const conn = new Connection(wsUrl(), { hello: () => ({ v: 1, type: 'join', room: room.id, name, codec }) })
+  const bus = new EventTarget()
+  const game = new NetGame({
+    conn,
+    codec,
+    lagger,
+    bus,
+    interpDelay: +(params.get('interp') ?? 100),
+    predict: params.get('predict') !== '0',
+    breakDeterminism: params.get('breakdet') === '1',
+  })
+  mountChat(document.getElementById('chat'), conn)
+  const hud = createHud(bus, (id) => game.players.get(id)?.name)
+  audio.listen(bus, () => game.myId)
+  conn.connect()
 
-  const names = new Map([
-    [1, name],
-    [2, 'dummy'],
-  ])
-  const hud = createHud(world.bus, (id) => names.get(id))
-  audio.listen(world.bus, () => me.id)
+  // live netcode controls
+  const LAGS = [0, 50, 100, 200]
+  window.addEventListener('keydown', (e) => {
+    if (document.activeElement?.tagName === 'INPUT') return
+    if (e.key === ']') game.interpDelay += 10
+    if (e.key === '[') game.interpDelay = Math.max(0, game.interpDelay - 10)
+    if (e.code === 'KeyN') showNetgraph = !showNetgraph
+    if (e.code === 'KeyL') lagger.settings.lag = LAGS[(LAGS.indexOf(lagger.settings.lag) + 1) % LAGS.length]
+    if (e.code === 'KeyJ') lagger.settings.jitter = lagger.settings.jitter ? 0 : 30
+    if (e.code === 'KeyD') lagger.settings.drop = lagger.settings.drop ? 0 : 2
+  })
 
-  function simulate(dt) {
-    world.step(
-      dt,
-      new Map([
-        [me.playerId, readControls(input)],
-        [dummy.playerId, { left: true, right: false, thrust: true, fire: false }],
-      ]),
-    )
+  let lastRender = performance.now()
+  function simulate() {
+    game.step(document.activeElement?.tagName === 'INPUT' ? {} : readControls(input))
     input.endStep()
   }
 
   function render(alpha, stats) {
+    const now = performance.now()
+    const dtFrame = Math.min(0.1, (now - lastRender) / 1000)
+    lastRender = now
     beginFrame(ctx, view, ARENA)
-    for (const e of world) drawEntity(ctx, e, alpha, sprites)
+    for (const e of game.view(alpha, dtFrame)) drawEntity(ctx, e, 1, sprites)
     endFrame(ctx)
     drawHud(ctx, [
-      `${room.name} — steps/s ${stats.stepsPerSecond} frames/s ${stats.framesPerSecond}`,
-      `frame ${stats.frameTimeMs.toFixed(1)} ms  entities ${world.size}`,
-      `score ${me.score}  hp ${me.hp}`,
+      `${room.name} — sim ${stats.stepsPerSecond}/s  frames ${stats.framesPerSecond}/s`,
+      `score ${game.myScore}  hp ${game.myShip?.hp ?? '-'}  players ${game.players.size}`,
       ...hud.lines(),
     ])
+    if (showNetgraph) drawNetgraph(ctx, view, game, lagger.settings, codec)
   }
 
-  const loop = createLoop({
-    step: 1 / 60,
-    simulate,
-    render,
-    scheduler: exp === 'interval' ? 'interval' : 'raf',
-    fixed: exp !== 'variable',
-  })
+  // the client simulates at the server's tick rate (30 Hz); rendering interpolates at display rate
+  const loop = createLoop({ step: DT, simulate, render })
   loop.start()
-  window.__loop = loop
-  window.__world = world
+  Object.assign(window, { __loop: loop, __game: game, __conn: conn, __lagger: lagger })
 }
 
 async function boot() {

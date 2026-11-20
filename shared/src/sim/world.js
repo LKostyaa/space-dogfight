@@ -16,6 +16,10 @@ export class World {
     this.time = 0
     // Event bus: the sim dispatches, audio/HUD/network subscribe. The sim imports none of them.
     this.bus = new EventTarget()
+    // the same events, collected per step, so the server can put them into snapshots
+    this.stepEvents = []
+    this.targets = { asteroids: 0, pickups: 0 }
+    this.maintenanceIn = 0
   }
 
   spawn(e) {
@@ -47,17 +51,44 @@ export class World {
   }
 
   emit(type, detail) {
+    this.stepEvents.push({ type, ...detail })
     this.bus.dispatchEvent(new CustomEvent(type, { detail }))
+  }
+
+  /** Returns and clears the events of the steps since the last call. */
+  drainEvents() {
+    const events = this.stepEvents
+    this.stepEvents = []
+    return events
   }
 
   /** inputs: Map<playerId, controls> */
   step(dt, inputs = new Map()) {
-    for (const e of this.#entities.values()) e.remember()
-    for (const ship of this.ofKind('ship')) ship.controls = inputs.get(ship.playerId) ?? ship.controls
+    for (const e of this.#entities.values()) if (!e.driven) e.remember()
+    for (const ship of this.ofKind('ship')) if (!ship.driven) ship.controls = inputs.get(ship.playerId) ?? ship.controls
     for (const e of this.#entities.values()) if (e.alive) e.update(dt, this)
     resolveCollisions(this, this.findPairs)
     this.sweep()
     this.time += dt
+    this.maintenanceIn -= dt
+    if (this.maintenanceIn <= 0) this.maintain()
+  }
+
+  /** Every few seconds: top up rocks and power-ups so a long match never runs empty. */
+  maintain() {
+    this.maintenanceIn = 5
+    let rocks = 0
+    for (const _ of this.ofKind('asteroid')) rocks++
+    if (rocks < this.targets.asteroids) {
+      const edge = this.rng.int(2) === 0 ? new Vector2(0, this.rng.range(0, ARENA.height)) : new Vector2(this.rng.range(0, ARENA.width), 0)
+      this.spawn(new Asteroid({ pos: edge, vel: Vector2.fromAngle(this.rng.range(0, Math.PI * 2), this.rng.range(20, 60)), radius: this.rng.range(26, 40), spin: this.rng.range(-1, 1) }))
+    }
+    let pickups = 0
+    for (const _ of this.ofKind('pickup')) pickups++
+    if (pickups < this.targets.pickups) {
+      const effects = ['shield', 'rapid', 'homing']
+      this.spawn(new Pickup({ pos: this.findSafeSpot(), effect: effects[this.rng.int(effects.length)] }))
+    }
   }
 
   sweep() {
@@ -77,6 +108,8 @@ export class World {
 
   /** Populate the arena with rocks and power-ups. */
   populate({ asteroids = 6, pickups = 3 } = {}) {
+    this.targets = { asteroids, pickups }
+    this.maintenanceIn = 5
     for (let i = 0; i < asteroids; i++) {
       this.spawn(
         new Asteroid({

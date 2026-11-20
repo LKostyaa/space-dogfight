@@ -41,6 +41,11 @@ export class Connection extends EventTarget {
         this.dispatchEvent(new CustomEvent('binary', { detail: e.data }))
         return
       }
+      if (e.data.startsWith('{"v":1,"type":"snapshot"')) {
+        // hot path: the codec parses it, not us
+        this.dispatchEvent(new CustomEvent('snapshot', { detail: e.data }))
+        return
+      }
       let msg
       try {
         msg = JSON.parse(e.data)

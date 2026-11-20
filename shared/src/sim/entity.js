@@ -1,5 +1,5 @@
 import { Vector2 } from './vector.js'
-import { ARENA } from './arena.js'
+import { wrapPos } from './arena.js'
 
 /**
  * Base class for everything in the world. Ids come from a private static
@@ -43,10 +43,7 @@ export class Entity {
   }
 
   wrap() {
-    const { width: w, height: h } = ARENA
-    if (this.pos.x < 0 || this.pos.x >= w || this.pos.y < 0 || this.pos.y >= h) {
-      this.pos = new Vector2(((this.pos.x % w) + w) % w, ((this.pos.y % h) + h) % h)
-    }
+    this.pos = wrapPos(this.pos)
   }
 
   /** Called by the collision system. Default: nothing happens. */

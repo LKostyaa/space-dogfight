@@ -8,10 +8,20 @@ import { RoomManager } from './rooms.js'
 import { attachWebSocket } from './ws.js'
 import { startMatchLog } from './log/matchlog.js'
 import { serveStatic } from './static.js'
+import { Match } from './match.js'
+import { ARENAS } from '@dogfight/shared/sim/arenas.js'
 
 const config = loadConfig()
 const rooms = new RoomManager(config)
 const matchLogs = new Map()
+const netStats = { bytesOut: 0, bytesIn: 0, messagesIn: 0 }
+
+// every room gets an authoritative Match (registered before the WebSocket layer wires the room)
+rooms.on('created', (room) => {
+  const arena = ARENAS[room.arena] ?? ARENAS.classic
+  room.match = new Match(room, { ...arena, log: console })
+  room.once('closed', () => room.match.stop())
+})
 
 rooms.on('created', async (room) => {
   const log = await startMatchLog(room, config.logDir)
@@ -56,6 +66,9 @@ async function handle(req, res) {
     return json(res, 200, { ok: true, uptime: process.uptime(), rss: process.memoryUsage().rss })
   }
   if (route === 'GET /api/rooms') return json(res, 200, rooms.list())
+  if (route === 'GET /api/stats') {
+    return json(res, 200, { net: netStats, rss: process.memoryUsage().rss, rooms: rooms.list().map((r) => r.match.stats()) })
+  }
   if (route === 'POST /api/rooms') {
     const body = await readBody(req)
     const id = String(body.name ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24)
@@ -101,7 +114,7 @@ const server = http.createServer((req, res) => {
   })
 })
 
-const ws = attachWebSocket(server, { rooms, config })
+const ws = attachWebSocket(server, { rooms, config, stats: netStats })
 
 server.listen(config.port, config.host, () => {
   console.log(`server on http://${config.host}:${server.address().port}`)
