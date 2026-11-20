@@ -1,0 +1,19 @@
+{
+  "images": {
+    "sprites": "/assets/sprites.svg"
+  },
+  "sounds": {
+    "shoot": "/assets/sfx/shoot.wav",
+    "hit": "/assets/sfx/hit.wav",
+    "explosion": "/assets/sfx/explosion.wav",
+    "pickup": "/assets/sfx/pickup.wav"
+  },
+  "arenas": {
+    "classic": "/assets/arenas/classic.json",
+    "belt": "/assets/arenas/belt.json"
+  },
+  "sheet": {
+    "cell": 64,
+    "frames": { "ship": 0, "shipAlt": 1, "asteroid": 2, "bullet": 3, "shield": 4, "rapid": 5, "homing": 6 }
+  }
+}

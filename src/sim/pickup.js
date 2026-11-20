@@ -25,6 +25,6 @@ export class Pickup extends Entity {
     if (other.kind !== 'ship' || other.dead) return
     EFFECTS[this.effect](other)
     world.despawn(this.id)
-    world.emit('pickup', { id: other.id, effect: this.effect })
+    world.emit('pickup', { id: other.id, playerId: other.playerId, effect: this.effect })
   }
 }

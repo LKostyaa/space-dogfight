@@ -46,8 +46,14 @@ export function endFrame(ctx) {
   ctx.restore()
 }
 
-export function drawShip(ctx, ship, p) {
+export function drawShip(ctx, ship, p, sprites) {
   if (ship.dead) return
+  if (sprites?.ok) {
+    if (ship.controls?.thrust || ship.thrust) drawFlame(ctx, p)
+    sprites.draw(ctx, ship.color === '#5ec8ff' ? 'ship' : 'shipAlt', p.x, p.y, p.angle, 44)
+    drawShipDecor(ctx, ship, p)
+    return
+  }
   ctx.save()
   ctx.translate(p.x, p.y)
   ctx.rotate(p.angle)
@@ -68,13 +74,30 @@ export function drawShip(ctx, ship, p) {
   ctx.lineTo(-12, 10)
   ctx.closePath()
   ctx.stroke()
+  ctx.restore()
+  drawShipDecor(ctx, ship, p)
+}
+
+function drawFlame(ctx, p) {
+  ctx.save()
+  ctx.translate(p.x, p.y)
+  ctx.rotate(p.angle)
+  ctx.fillStyle = '#ffb347'
+  ctx.beginPath()
+  ctx.moveTo(-10, -5)
+  ctx.lineTo(-20 - (performance.now() % 80) / 10, 0)
+  ctx.lineTo(-10, 5)
+  ctx.fill()
+  ctx.restore()
+}
+
+function drawShipDecor(ctx, ship, p) {
   if (ship.shield > 0) {
     ctx.strokeStyle = 'rgba(120,220,255,0.6)'
     ctx.beginPath()
-    ctx.arc(0, 0, 22, 0, Math.PI * 2)
+    ctx.arc(p.x, p.y, 22, 0, Math.PI * 2)
     ctx.stroke()
   }
-  ctx.restore()
   // name + hp bar
   ctx.fillStyle = '#dde'
   ctx.font = '11px sans-serif'
@@ -87,18 +110,20 @@ export function drawShip(ctx, ship, p) {
   ctx.textAlign = 'left'
 }
 
-export function drawEntity(ctx, e, alpha) {
+export function drawEntity(ctx, e, alpha, sprites) {
   const p = pose(e, alpha)
   switch (e.kind) {
     case 'ship':
-      return drawShip(ctx, e, p)
+      return drawShip(ctx, e, p, sprites)
     case 'bullet':
+      if (!e.behaviors.length && sprites?.draw(ctx, 'bullet', p.x, p.y, p.angle, 20)) return
       ctx.fillStyle = e.behaviors.length ? '#ff6bd6' : '#fff6a0'
       ctx.beginPath()
       ctx.arc(p.x, p.y, e.radius, 0, Math.PI * 2)
       ctx.fill()
       return
     case 'asteroid': {
+      if (!e.behaviors.length && sprites?.draw(ctx, 'asteroid', p.x, p.y, p.angle, e.radius * 2.2)) return
       ctx.save()
       ctx.translate(p.x, p.y)
       ctx.rotate(p.angle)
@@ -116,6 +141,7 @@ export function drawEntity(ctx, e, alpha) {
       return
     }
     case 'pickup': {
+      if (sprites?.draw(ctx, e.effect, p.x, p.y, 0, 40)) return
       const colors = { shield: '#78dcff', rapid: '#ffd54f', homing: '#ff6bd6' }
       ctx.save()
       ctx.translate(p.x, p.y)

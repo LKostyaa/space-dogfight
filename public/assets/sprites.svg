@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="448" height="64" viewBox="0 0 448 64">
+  <!-- sprite sheet: 7 cells of 64x64, every sprite faces +x (angle 0) -->
+  <!-- 0: ship (blue) -->
+  <g transform="translate(32 32)">
+    <path d="M18 0 L-13 -12 L-7 0 L-13 12 Z" fill="#14324a" stroke="#5ec8ff" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="4" cy="0" r="3" fill="#bdf0ff"/>
+  </g>
+  <!-- 1: ship (orange) -->
+  <g transform="translate(96 32)">
+    <path d="M18 0 L-13 -12 L-7 0 L-13 12 Z" fill="#4a2414" stroke="#ff8a65" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="4" cy="0" r="3" fill="#ffd9c8"/>
+  </g>
+  <!-- 2: asteroid -->
+  <g transform="translate(160 32)">
+    <path d="M28 2 L18 22 L-4 29 L-22 18 L-29 -2 L-17 -22 L5 -28 L22 -17 Z" fill="#2b2620" stroke="#b8a58a" stroke-width="2.5"/>
+    <circle cx="-8" cy="-6" r="5" fill="none" stroke="#6e6252" stroke-width="2"/>
+    <circle cx="9" cy="9" r="3.5" fill="none" stroke="#6e6252" stroke-width="2"/>
+  </g>
+  <!-- 3: bullet -->
+  <g transform="translate(224 32)">
+    <ellipse cx="0" cy="0" rx="9" ry="3.5" fill="#fff6a0"/>
+  </g>
+  <!-- 4: pickup shield -->
+  <g transform="translate(288 32)">
+    <rect x="-14" y="-14" width="28" height="28" rx="5" fill="#0f2a33" stroke="#78dcff" stroke-width="2.5"/>
+    <path d="M0 -9 L8 -5 L6 6 L0 10 L-6 6 L-8 -5 Z" fill="#78dcff"/>
+  </g>
+  <!-- 5: pickup rapid -->
+  <g transform="translate(352 32)">
+    <rect x="-14" y="-14" width="28" height="28" rx="5" fill="#33290f" stroke="#ffd54f" stroke-width="2.5"/>
+    <path d="M2 -10 L-6 2 L0 2 L-2 10 L6 -2 L0 -2 Z" fill="#ffd54f"/>
+  </g>
+  <!-- 6: pickup homing -->
+  <g transform="translate(416 32)">
+    <rect x="-14" y="-14" width="28" height="28" rx="5" fill="#330f2b" stroke="#ff6bd6" stroke-width="2.5"/>
+    <circle r="7" fill="none" stroke="#ff6bd6" stroke-width="2"/>
+    <circle r="2.5" fill="#ff6bd6"/>
+  </g>
+</svg>

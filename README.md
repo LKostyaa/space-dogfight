@@ -127,3 +127,68 @@ TypeError: Cannot read properties of undefined (reading 'pos')
 
 Ціна: поведінки не видно з типу класу, і порядок виконання поведінок треба тримати в голові. Для гри, де
 комбінації постійно змінюються, це прийнятно.
+
+---
+
+## Лаб 3. Асинхронний JavaScript: Promises, async/await і екран завантаження
+
+**Що зроблено**
+
+- `public/assets/manifest.json` — спрайт-лист (`sprites.svg`, 7 кадрів 64×64), 4 звуки (згенеровані
+  `scripts/gen-sounds.mjs`), 2 арени (`classic`, `belt`).
+- `src/assets/loader.js`:
+  - `fetchChecked` / `fetchJson` перевіряють `res.ok` (fetch **не** кидає помилку на 404 — це треба робити самому)
+    і кидають `HttpError` зі статусом; зіпсований JSON — окрема зрозуміла помилка;
+  - `loadImage`, `loadAudio(ctx, url)`, `loadJson` — усі приймають `AbortSignal`;
+  - `withRetry(fn, { attempts, baseMs, signal })` — експоненційний backoff з jitter, **не** повторює 4xx і abort;
+  - `loadAll(items, { onProgress, signal })` — `Promise.all` з прогресом по кожному елементу. Необов'язкові
+    елементи (`required: false`) при помилці не валять гру: використовується векторна графіка або арена за замовчуванням.
+- Екран завантаження на канвасі зі справжнім прогрес-баром; гра стартує лише після `await loadAll(...)`.
+- Спрайти малюються з листа через `drawImage` з прямокутником-джерелом (`src/render/sprites.js`).
+- Звук: `src/audio/audio.js` володіє `AudioContext`, буфери декодуються під час завантаження,
+  контекст «розблоковується» першим кліком/клавішею.
+- **Симуляція не імпортує ні аудіо, ні HUD.** `World` має шину `bus = new EventTarget()` і шле
+  `CustomEvent`-и `fired`, `hit`, `exploded`, `pickup`; на них підписані `audio.js` і `ui/hud.js` (стрічка подій).
+- Лобі: `src/ui/lobby.js` — `class Lobby extends EventTarget` з `enter()`, `refresh()`, `join()`, `leave()`
+  і подіями `rooms` / `error` / `join`. Поки лобі відкрите, список кімнат (`/api/rooms.json`) оновлюється кожні 3 с,
+  кожен запит має `AbortSignal.any([leave, AbortSignal.timeout(2500)])`. Рендер DOM — окремий модуль
+  `src/ui/lobby-view.js`, який лише слухає події. Після входу в кімнату за 4 с не було жодного запиту до rooms.json —
+  polling і запит, що висів, скасовані.
+
+![Лобі](docs/img/lab3-lobby.png)
+
+### Паралельно чи послідовно
+
+Кожен звук віддається з затримкою 300 мс (`?slow=300`, middleware у `vite.config.js`), 3 запуски:
+
+| Спосіб | Час завантаження |
+|---|---|
+| `Promise.all` | 318, 315, 312 мс |
+| послідовні `await` (`?sequential=1`) | 1240, 1245, 1234 мс |
+
+Послідовно час — це сума всіх затримок (4 × 300 мс), паралельно — найдовша з них.
+
+### П'ять задач на порядок виконання
+
+Файл `docs/ordering-puzzles.js`, результати отримані в Chrome:
+
+| # | Код (скорочено) | Вивід | Чому |
+|---|---|---|---|
+| 1 | `log A; setTimeout(B); Promise.then(C); log D` | `A D C B` | спершу весь синхронний код, потім усі мікрозадачі, потім наступна задача (таймер) |
+| 2 | `async f(){ log f1; await null; log f2 }; log start; f(); log end` | `start f1 end f2` | до першого `await` функція йде синхронно; все після нього — мікрозадача |
+| 3 | `setTimeout(t0); then(() => { setTimeout(t1); log p1 }); then(p2)` | `p1 p2 t0 t1` | таймер, поставлений у мікрозадачі, стає в кінець черги задач — після `t0` |
+| 4 | `rAF(raf); setTimeout(timeout); queueMicrotask(micro); log sync` | `sync micro timeout raf` | rAF виконується перед наступним кадром відмальовки, тобто пізніше за таймер з 0 мс |
+| 5 | два ланцюжки `.then(a1).then(a2)` і `.then(b1).then(b2)` | `a1 b1 a2 b2` | кожен `.then` ставить наступну ланку в чергу лише після виконання попередньої, тому ланцюжки чергуються |
+
+### Галерея збоїв
+
+| Збій | Як відтворити | Що бачить гравець |
+|---|---|---|
+| спрайт 404 | `?missing=1` | лобі відкривається, попередження `HTTP 404 for /assets/nope.svg — fallback used`; повтору не було (4xx) |
+| зіпсований JSON | `?badjson=1` | лобі відкривається, попередження `Corrupt JSON… — fallback used`, арена за замовчуванням |
+| abort посеред завантаження | `?slow=2000&abort=300` | «Loading failed / Loading aborted» і кнопка **Retry** |
+| таймаут мережі | `/api/rooms.json` відповідає 4 с, таймаут 2.5 с | у лобі «Could not load rooms: signal timed out. Retrying…», наступне оновлення пробує знову |
+
+| 404 | Зіпсований JSON | Abort | Таймаут |
+|---|---|---|---|
+| ![](docs/img/lab3-fail-404.png) | ![](docs/img/lab3-fail-badjson.png) | ![](docs/img/lab3-fail-abort.png) | ![](docs/img/lab3-fail-timeout.png) |

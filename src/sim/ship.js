@@ -87,13 +87,13 @@ export class Ship extends Entity {
   damage(amount, world, attacker) {
     if (this.dead || this.shield > 0) return
     this.#hp -= amount
-    world.emit('hit', { id: this.id })
+    world.emit('hit', { id: this.id, playerId: this.playerId })
     if (this.#hp <= 0) {
       this.respawnIn = RESPAWN_TIME
       this.collidable = false
       if (attacker && attacker !== this) attacker.score += 3
       world.spawn(new Explosion({ pos: this.pos, rng: world.rng, color: this.color }))
-      world.emit('exploded', { id: this.id, by: attacker?.playerId })
+      world.emit('exploded', { id: this.id, kind: 'ship', playerId: this.playerId, by: attacker?.playerId })
     }
   }
 

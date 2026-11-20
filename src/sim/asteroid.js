@@ -24,7 +24,7 @@ export class Asteroid extends Entity {
     if (this.#hp > 0) return
     world.despawn(this.id)
     world.spawn(new Explosion({ pos: this.pos, rng: world.rng, color: '#b8a58a' }))
-    world.emit('exploded', { id: this.id, by: attacker?.playerId })
+    world.emit('exploded', { id: this.id, kind: 'asteroid', by: attacker?.playerId })
     if (attacker) attacker.score += 1
     // a big rock splits into two smaller ones
     if (this.radius > 20) {

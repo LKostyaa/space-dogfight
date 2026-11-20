@@ -1,0 +1,5 @@
+[
+  { "id": "alpha", "name": "Alpha", "arena": "classic", "players": 1, "maxPlayers": 8 },
+  { "id": "belt", "name": "Asteroid belt", "arena": "belt", "players": 3, "maxPlayers": 8 },
+  { "id": "duel", "name": "Duel", "arena": "classic", "players": 0, "maxPlayers": 2 }
+]

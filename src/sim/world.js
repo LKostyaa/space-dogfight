@@ -14,7 +14,8 @@ export class World {
     this.rng = createRng(seed)
     this.findPairs = findPairs
     this.time = 0
-    this.listeners = []
+    // Event bus: the sim dispatches, audio/HUD/network subscribe. The sim imports none of them.
+    this.bus = new EventTarget()
   }
 
   spawn(e) {
@@ -45,9 +46,8 @@ export class World {
     for (const e of this.#entities.values()) if (e.kind === kind && e.alive) yield e
   }
 
-  /** Lab 2: a simple callback list. Lab 3 replaces it with an EventTarget bus. */
   emit(type, detail) {
-    for (const fn of this.listeners) fn(type, detail)
+    this.bus.dispatchEvent(new CustomEvent(type, { detail }))
   }
 
   /** inputs: Map<playerId, controls> */
