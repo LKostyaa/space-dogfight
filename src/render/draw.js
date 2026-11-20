@@ -1,15 +1,25 @@
+import { ARENA } from '../sim/arena.js'
+
 export const lerp = (a, b, t) => a + (b - a) * t
 
 /** Interpolate angles along the shortest arc (π → -π must not spin a full turn). */
 export function lerpAngle(a, b, t) {
-  let d = b - a
-  d = ((((d + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI
+  const d = Math.atan2(Math.sin(b - a), Math.cos(b - a))
   return a + d * t
 }
 
 /** Interpolate positions, but don't smear across a wrap-around jump. */
 export function lerpPos(a, b, t, size) {
   return Math.abs(b - a) > size / 2 ? b : lerp(a, b, t)
+}
+
+/** Interpolated pose of an entity for this render frame. */
+export function pose(e, alpha) {
+  return {
+    x: lerpPos(e.prevPos.x, e.pos.x, alpha, ARENA.width),
+    y: lerpPos(e.prevPos.y, e.pos.y, alpha, ARENA.height),
+    angle: lerpAngle(e.prevAngle, e.angle, alpha),
+  }
 }
 
 const stars = Array.from({ length: 220 }, (_, i) => ({
@@ -19,14 +29,12 @@ const stars = Array.from({ length: 220 }, (_, i) => ({
 }))
 
 /** Fit the fixed-size arena into the window (letterbox). */
-export function beginFrame(ctx, view, arena) {
+export function beginFrame(ctx, view, arena = ARENA) {
   ctx.fillStyle = '#05070d'
   ctx.fillRect(0, 0, view.width, view.height)
   const scale = Math.min(view.width / arena.width, view.height / arena.height)
-  const ox = (view.width - arena.width * scale) / 2
-  const oy = (view.height - arena.height * scale) / 2
   ctx.save()
-  ctx.translate(ox, oy)
+  ctx.translate((view.width - arena.width * scale) / 2, (view.height - arena.height * scale) / 2)
   ctx.scale(scale, scale)
   ctx.fillStyle = '#0a0e1a'
   ctx.fillRect(0, 0, arena.width, arena.height)
@@ -38,19 +46,20 @@ export function endFrame(ctx) {
   ctx.restore()
 }
 
-export function drawShip(ctx, s, color = '#5ec8ff') {
+export function drawShip(ctx, ship, p) {
+  if (ship.dead) return
   ctx.save()
-  ctx.translate(s.x, s.y)
-  ctx.rotate(s.angle)
-  if (s.thrust) {
+  ctx.translate(p.x, p.y)
+  ctx.rotate(p.angle)
+  if (ship.controls?.thrust || ship.thrust) {
     ctx.fillStyle = '#ffb347'
     ctx.beginPath()
     ctx.moveTo(-10, -5)
-    ctx.lineTo(-20 - Math.random() * 8, 0)
+    ctx.lineTo(-20 - (performance.now() % 80) / 10, 0)
     ctx.lineTo(-10, 5)
     ctx.fill()
   }
-  ctx.strokeStyle = color
+  ctx.strokeStyle = ship.color
   ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(16, 0)
@@ -59,13 +68,82 @@ export function drawShip(ctx, s, color = '#5ec8ff') {
   ctx.lineTo(-12, 10)
   ctx.closePath()
   ctx.stroke()
+  if (ship.shield > 0) {
+    ctx.strokeStyle = 'rgba(120,220,255,0.6)'
+    ctx.beginPath()
+    ctx.arc(0, 0, 22, 0, Math.PI * 2)
+    ctx.stroke()
+  }
   ctx.restore()
+  // name + hp bar
+  ctx.fillStyle = '#dde'
+  ctx.font = '11px sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText(ship.name, p.x, p.y - 26)
+  ctx.fillStyle = '#333'
+  ctx.fillRect(p.x - 16, p.y + 22, 32, 3)
+  ctx.fillStyle = ship.hp > 40 ? '#6f6' : '#f66'
+  ctx.fillRect(p.x - 16, p.y + 22, (32 * ship.hp) / 100, 3)
+  ctx.textAlign = 'left'
+}
+
+export function drawEntity(ctx, e, alpha) {
+  const p = pose(e, alpha)
+  switch (e.kind) {
+    case 'ship':
+      return drawShip(ctx, e, p)
+    case 'bullet':
+      ctx.fillStyle = e.behaviors.length ? '#ff6bd6' : '#fff6a0'
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, e.radius, 0, Math.PI * 2)
+      ctx.fill()
+      return
+    case 'asteroid': {
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.angle)
+      ctx.strokeStyle = e.behaviors.length ? '#ff8a65' : '#b8a58a'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * Math.PI * 2
+        const r = e.radius * (0.82 + ((i * 37) % 7) / 30)
+        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r)
+      }
+      ctx.closePath()
+      ctx.stroke()
+      ctx.restore()
+      return
+    }
+    case 'pickup': {
+      const colors = { shield: '#78dcff', rapid: '#ffd54f', homing: '#ff6bd6' }
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.angle)
+      ctx.strokeStyle = colors[e.effect]
+      ctx.lineWidth = 2
+      ctx.strokeRect(-9, -9, 18, 18)
+      ctx.restore()
+      ctx.fillStyle = colors[e.effect]
+      ctx.font = '10px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText(e.effect, p.x, p.y + 24)
+      ctx.textAlign = 'left'
+      return
+    }
+    case 'explosion':
+      ctx.fillStyle = e.color
+      ctx.globalAlpha = Math.max(0, e.life / 0.7)
+      for (const q of e.particles) ctx.fillRect(e.pos.x + q.offset.x, e.pos.y + q.offset.y, 2, 2)
+      ctx.globalAlpha = 1
+      return
+  }
 }
 
 export function drawHud(ctx, lines) {
   ctx.font = '13px ui-monospace, monospace'
   ctx.fillStyle = 'rgba(0,0,0,0.5)'
-  ctx.fillRect(8, 8, 210, 8 + lines.length * 16)
+  ctx.fillRect(8, 8, 230, 8 + lines.length * 16)
   ctx.fillStyle = '#c8f7c5'
   lines.forEach((l, i) => ctx.fillText(l, 14, 26 + i * 16))
 }
