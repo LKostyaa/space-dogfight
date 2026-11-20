@@ -7,10 +7,13 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev:server   # ігровий сервер на :3000
+npm run dev:client   # Vite на http://localhost:5173 (проксі /api і /ws на :3000)
 ```
 
-Керування: ← → (або A/D) — поворот, ↑ (W) — тяга.
+Продакшн-режим локально: `npm run build && npm start` → http://localhost:3000
+
+Керування: ← → (або A/D) — поворот, ↑ (W) — тяга, пробіл — постріл, Enter — чат.
 
 ---
 
@@ -192,3 +195,112 @@ TypeError: Cannot read properties of undefined (reading 'pos')
 | 404 | Зіпсований JSON | Abort | Таймаут |
 |---|---|---|---|
 | ![](docs/img/lab3-fail-404.png) | ![](docs/img/lab3-fail-badjson.png) | ![](docs/img/lab3-fail-abort.png) | ![](docs/img/lab3-fail-timeout.png) |
+
+---
+
+## Лаб 4. Node.js: EventEmitter, streams, WebSocket-сервер
+
+**Структура** — npm workspaces: `client/` (Vite-застосунок з лаб 1–3) і `server/`.
+
+```txt
+server/src/
+  index.js        http-сервер, API, статика, graceful shutdown
+  config.js       PORT, HOST, LOG_DIR, ліміти — з process.env, з перевіркою
+  rooms.js        Room extends EventEmitter, RoomManager
+  protocol.js     версіоновані JSON-повідомлення v0, validateClientMessage, коди закриття
+  ws.js           життєвий цикл сокета, heartbeat, ліміти
+  ratelimit.js    token bucket
+  static.js       віддача client/dist з MIME і захистом від path traversal
+  log/matchlog.js object-mode Transform → NDJSON через pipeline
+  log/replay.js   async-генератор по NDJSON-файлу
+```
+
+**HTTP** — голий `node:http`: `GET /health`, `GET /api/rooms`, `POST /api/rooms` (тіло ≤ 1 КБ, перевіряється),
+`GET /api/replays`, `GET /api/replays/:id` (стрімінг), `GET /api/slow` (навмисне блокування, див. нижче), статика
+`client/dist`. Запит `/assets/..%2f..%2f..%2fpackage.json` → `403 forbidden`. У dev Vite проксує `/api` і `/ws`.
+На `SIGINT`/`SIGTERM`: `server.close()`, клієнтам `shutdown` і закриття з кодом 1001, дописування логів, `exit(0)`.
+
+**Кімнати і WebSocket.** `Room extends EventEmitter` (`join`, `leave`, `chat`, `empty`, `event`), `RoomManager`
+видаляє порожні непостійні кімнати. Після підключення клієнт має надіслати `join` за 5 с. Кожне повідомлення
+перевіряється, роster і чат розсилаються кімнаті, ping кожні 15 с, після двох пропущених pong — `terminate()`,
+обробник `"error"` на кожному сокеті. Клієнт — `client/src/net/connection.js`: диспетчеризація за `type`,
+черга відправки, поки з'єднання встановлюється, reconnect з експоненційним backoff. Лобі тепер бере кімнати
+з `/api/rooms`. Два вікна в одній кімнаті бачать одне одного і чат:
+
+![Чат у двох вікнах](docs/img/lab4-chat.png)
+
+**Захист від зловживань** (перевірено скриптом з окремим ws-клієнтом):
+
+| Що робить клієнт | Результат |
+|---|---|
+| не шле `join` | закрито `4001 join timeout` через 5005 мс |
+| шле не-JSON | `4000 not json` |
+| шле невідомий тип | `4000 unknown type hack` |
+| повідомлення 10 КБ (`maxPayload` 4 КБ) | `1009` (ws закриває сам) |
+| 200 повідомлень поспіль (token bucket 30/с, запас 60) | `4002 rate limit` |
+| третій гравець у кімнаті `duel` на 2 місця | `4003 room full` |
+
+Повільний клієнт: якщо `bufferedAmount` > 256 КБ, некритичні повідомлення (чат) йому не шлються; якщо > 1 МБ —
+`4004 too slow`. Ліміти кімнат і гравців — у `config.js`.
+
+### Логи матчів через streams
+
+Кожна кімната пише події в `logs/<room>-<timestamp>.ndjson`: `events.on(room, 'event')` → `Readable.from(...)` →
+object-mode `Transform` (об'єкт → рядок NDJSON) → `createWriteStream`, усе через `pipeline`.
+`replay.js` читає файл рядками через `readline` і віддає розпарсені події async-генератором, а
+`GET /api/replays/:id` стрімить файл через `pipeline(createReadStream(file), res)`.
+
+**Backpressure.** `server/scripts/gen-big-log.js` створив 200 МБ лог, клієнт качав його з обмеженням 8 МБ/с
+(25 с). RSS сервера опитувався кожні 250 мс:
+
+![RSS під час завантаження](docs/img/lab4-rss.svg)
+
+З `pipeline` RSS тримався в межах 63–91 МБ: коли буфер сокета заповнений, `res.write()` повертає `false`,
+`pipeline` ставить читання файлу на паузу і продовжує його після `drain`. Для порівняння той самий файл через
+`readFile` + `res.end(buf)` — 250 МБ RSS: весь файл лежить у пам'яті, поки повільний клієнт його забирає.
+
+### Event loop, backpressure і падіння процесу
+
+Цикл подій Node проходить фази: **timers** (`setTimeout`/`setInterval`) → **pending callbacks** →
+**poll** (нові I/O-події: вхідні з'єднання, дані сокетів, готові файли) → **check** (`setImmediate`) →
+**close callbacks**; між колбеками виконуються мікрозадачі (`process.nextTick`, промиси).
+Усе це — один потік. Тому синхронний обробник, що працює 300 мс, зупиняє **всіх**: поки він крутиться,
+фаза poll не настає, і повідомлення інших гравців просто лежать у буфері ядра.
+
+Демонстрація: два ws-клієнти в кімнаті, один шле повідомлення в чат кожні 50 мс, інший міряє затримку.
+Паралельно 5 разів викликаємо `GET /api/slow` (busy-loop 300 мс):
+
+| Умова | p50 | max |
+|---|---|---|
+| сервер вільний | 1 мс | 2 мс |
+| 5 × `/api/slow` | 124 мс | 283 мс |
+
+Чат одного гравця «завис» через запит зовсім іншого клієнта. У грі з тіком 30 Гц (33 мс) це означає
+пропущені 8–9 тіків. Виправлення — не робити важку синхронну роботу в обробниках (розбити на шматки або
+винести у `worker_threads`).
+
+Backpressure проявився в M3: швидкий диск і повільна мережа — без контролю дані накопичуються в пам'яті
+(250 МБ), з `pipeline` — ні.
+
+**Чому одна помилка кладе весь сервер.** Якщо `EventEmitter` емітить `"error"`, а слухача немає, Node кидає
+виняток — процес падає разом з усіма кімнатами (`server/scripts/crash-demo.js`):
+
+```text
+$ node server/scripts/crash-demo.js crash
+tick: other players still being served
+node:events:497
+      throw er; // Unhandled 'error' event
+Error: ECONNRESET from one bad client
+exit code: 1
+
+$ node server/scripts/crash-demo.js fixed
+tick: other players still being served
+[socket] logged and closed: ECONNRESET from one bad client
+tick: other players still being served
+still alive after the error
+```
+
+Виправлення — `ws.on('error', …)` на кожному сокеті (`ws.js`) і `.catch` на кожному обробнику запиту
+(`index.js`). Необроблений відхилений проміс з Node 15 так само завершує процес.
+
+Тести: `npm test -w server` (`node:test`) — протокол, token bucket, лог матчу туди-назад.

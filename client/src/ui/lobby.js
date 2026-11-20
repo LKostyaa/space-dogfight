@@ -10,7 +10,7 @@ export class Lobby extends EventTarget {
   #controller = null
   #timer = 0
 
-  constructor({ url = '/api/rooms.json', intervalMs = 3000, timeoutMs = 2500 } = {}) {
+  constructor({ url = '/api/rooms', intervalMs = 3000, timeoutMs = 2500 } = {}) {
     super()
     this.url = url
     this.intervalMs = intervalMs

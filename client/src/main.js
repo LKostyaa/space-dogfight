@@ -13,6 +13,8 @@ import { createAudio } from './audio/audio.js'
 import { createHud } from './ui/hud.js'
 import { Lobby } from './ui/lobby.js'
 import { mountLobbyView } from './ui/lobby-view.js'
+import { Connection, wsUrl } from './net/connection.js'
+import { mountChat } from './ui/chat.js'
 
 // Test flags (README "Галерея збоїв"):
 //   ?missing=1    add a sprite that does not exist (404)
@@ -69,6 +71,11 @@ async function loadAssets() {
 }
 
 function startGame({ assets, manifest }, room, name) {
+  // Lab 4: the room is real (roster + chat over WebSocket); the match itself is still local until Lab 5.
+  const conn = new Connection(wsUrl(), { hello: () => ({ v: 0, type: 'join', room: room.id, name }) })
+  mountChat(document.getElementById('chat'), conn)
+  conn.connect()
+  window.__conn = conn
   const arena = assets[`arena:${room.arena}`] ?? { asteroids: 5, pickups: 3, seed: 1 }
   for (const [k, buf] of Object.entries(assets)) if (k.startsWith('sfx:')) audio.add(k.slice(4), buf)
   const sprites = createSprites(assets.sprites, manifest.sheet)
