@@ -414,3 +414,87 @@ GIF угорі README: два вікна в одній кімнаті при 100
 **Затримка інтерполяції.** 100 мс = 3 знімки при 30 Гц. При 2 % втрат і ±30 мс джитера буфер майже ніколи не
 спорожнюється (якщо час рендеру обганяє останній знімок, чужі кораблі «зависають»). 50 мс давали помітні ривки
 при джитері, 150+ мс — чужі кораблі відчутно «в минулому», важче влучати. Значення можна змінювати на льоту (`[` `]`).
+
+---
+
+## Лаб 6. TypeScript для протоколу і симуляції
+
+Усі три пакети — TypeScript у режимі `strict` + `noUncheckedIndexedAccess` + `verbatimModuleSyntax` +
+`erasableSyntaxOnly` (`tsconfig.base.json`, у кожному пакеті свій `tsconfig.json`). `npm run typecheck` у корені
+проганяє `tsc --noEmit` у кожному workspace. Мінімальний GitHub Actions (`.github/workflows/ci.yml`) запускає
+typecheck і тести на кожен push.
+
+**Як запускається.** Сервер і тести виконує сам Node — його вбудоване *type stripping* (Node ≥ 22.18):
+`node src/index.ts`, без збірки і без `tsx`. Тому в коді немає `enum`, `namespace` і parameter properties —
+лише синтаксис, який можна просто стерти (`erasableSyntaxOnly`), а імпорти пишуться з розширенням `.ts`
+(`allowImportingTsExtensions`). Клієнт збирає Vite.
+
+**Порядок міграції:** спершу `shared/`, потім сервер, потім клієнт. Тест детермінізму з Лаб 5
+(SHA-256 стану світу після 900 кроків) проходив після кожного кроку, а netcode-вимірювання дають ті самі
+числа (RTT 201 мс при 100 мс затримки, корекції 0.01–0.03 px), тобто поведінка під час виконання не змінилась.
+
+**Що зроблено:**
+
+- `shared/src/types.ts` — брендовані `EntityId`, `PlayerId`, `Tick`, `Seq`; `Result<T, E>`; `assertNever`.
+- `Vector2` з `readonly x, y`; знімки й повідомлення — `Readonly`.
+- Сутності — розмічене об'єднання: у кожного класу `readonly kind = 'ship'` (літерал), `AnyEntity = Ship | Bullet | …`,
+  `world.ofKind('ship')` повертає `Generator<Ship>` без жодного приведення типу (type predicate `isKind`).
+- `shared/src/protocol.ts` — **єдине джерело правди**: zod-схеми всіх JSON-повідомлень в обидва боки,
+  типи виводяться з них (`z.infer`). `parseClientMessage(data: unknown): Result<ClientMessage>` ніколи не кидає
+  винятків. Ручний валідатор з Лаб 4 видалено.
+- Кодеки реалізують інтерфейс `Codec` (`json.ts`, `binary.ts`); бінарний декодер перевіряє версію, межі і значення.
+- Кожен `switch` по `type`/`kind` закінчується `default: assertNever(x)` — новий тип повідомлення без обробки
+  не скомпілюється.
+- Типізовані події: `Room extends EventEmitter<RoomEvents>` (Node-генерик), на клієнті `Bus<E>` — `EventTarget`
+  з типізованими `emit`/`on` (`Lobby`, `Connection`, ігрова шина `Bus<ClientEvents>`).
+- Конфіг сервера — zod-схема `ServerConfigSchema` з дефолтами; `MAX_ROOMS=abc` → зрозуміла помилка при старті.
+- `catch (e: unknown)` скрізь, з перевіркою `instanceof`.
+- **0 `any`, 2 `as`** на весь код, обидва з коментарем: `toId()` у `types.ts` (бренд існує лише в типах) і
+  `world.emit()` (TypeScript не корелює generic-ключ через spread, TS#30581).
+
+**Фреймворк** для лобі і HUD я не брав. Лобі — це один список кнопок і поле вводу, HUD малюється на канвасі.
+`Bus` + DOM з Лаб 3 займають ~60 рядків, а React/Svelte додали б залежність і крок збірки, не прибравши
+жодної реальної складності. Канвас і ігровий цикл за правилами курсу лишаються без фреймворку.
+
+### Що знайшов TypeScript
+
+1. **`RawData` з `ws` — не завжди `Buffer`.** Сервер робив `data.buffer.slice(...)`, але фрагментоване повідомлення
+   приходить як `Buffer[]`, і цей код би впав. Тепер `toArrayBuffer()` обробляє всі три варіанти.
+2. **Куля могла «вдарити» вибух.** `Bullet.onCollide` викликав `other.damage(...)` для всього, крім себе, куль
+   і бонусів. У `Explosion` немає `damage` — у JS це не падало лише тому, що вибухи не колізійні. Тепер виключення явне.
+3. **`by: undefined` у подіях.** `attacker?.playerId` давав `undefined`, коли корабель розбився об астероїд;
+   у знімку це випадково ставало 0. Тип `by: PlayerId | 0` змусив записати це явно.
+4. **`Map.get` / індекси без перевірки** (`noUncheckedIndexedAccess`): `list[i]` у пошуку колізій,
+   `PALETTE[id % 8]`, `buffer[i + 1]` в інтерполяції, `EFFECT_NAMES[rng.int(3)]` — усі тепер обробляють `undefined`.
+5. **Сплутані id.** HUD шукав ім'я гравця за `playerId` з події (просто число), а мапа була з ключем `PlayerId`.
+   Бренди не дали передати «будь-яке число» туди, де очікується id гравця.
+6. **Мовчазний fallback кодека.** `getCodec(name)` повертав бінарний кодек для будь-якого невідомого імені;
+   тепер `name: 'binary' | 'json'`, помилка в назві — помилка компіляції.
+7. **`seq` кулі — 16 біт, а `seq` клієнта — 32.** Помітив, коли писав схему (`uint.max(0xffff)`): після 65 535 входів
+   (~36 хв гри) передбачені кулі перестали б зіставлятися з серверними. Порівняння тепер по `seq & 0xffff`.
+8. **`getContext('2d')` може повернути `null`**, а `JSON.parse` відповіді лобі — що завгодно: відповідь `/api/rooms`
+   тепер перевіряє zod.
+
+### Три типи, які варто пояснити
+
+```ts
+// 1. Бренд: на рантаймі це просто number, але EntityId і PlayerId не можна переплутати.
+type Brand<T, B extends string> = T & { readonly [brand]: B }
+type PlayerId = Brand<number, 'PlayerId'>
+```
+Перетин з полем, якого насправді немає, робить два «числа» несумісними для компілятора, при цьому
+в JavaScript нічого не додається.
+
+```ts
+// 2. З мапи «подія → дані» робимо об'єднання { type: 'fired', … } | { type: 'hit', … } | …
+type GameEvent = { [K in keyof GameEvents]: { type: K } & GameEvents[K] }[keyof GameEvents]
+```
+Пишемо мапу один раз, а розмічене об'єднання отримуємо автоматично — і `switch (ev.type)` звужує тип у кожній гілці.
+
+```ts
+// 3. Події Connection = усі повідомлення сервера за їхнім type + події життєвого циклу.
+type ByType<T extends { type: string }> = { [K in T['type']]: Extract<T, { type: K }> }
+type ConnectionEvents = ByType<ServerMessage> & { close: { code: number; reason: string }; … }
+conn.on('roster', (m) => m.players)   // m має тип саме roster-повідомлення
+```
+Варто додати нове повідомлення в zod-схему — і `conn.on('нове', …)` одразу знатиме його форму.
