@@ -4,20 +4,13 @@ import { controlsToBits, type InputMsg } from '@dogfight/shared/protocol.ts'
 import { toId, type Seq } from '@dogfight/shared/types.ts'
 import type { Rng } from '@dogfight/shared/sim/rng.ts'
 
-/** Anything that can drive a ship: a human over the network or a bot. Both produce the same InputMsg. */
 export interface PlayerInput {
-  /** Called once per server tick; returns the next input (or null if none arrived). */
   nextInput(world: World, ship: Ship): InputMsg | null
 }
 
 const angleTo = (from: Ship, x: number, y: number): number => Math.atan2(y - from.pos.y, x - from.pos.x)
 const angleDiff = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a))
 
-/**
- * Server-side AI pilot. It goes through exactly the same path as a human:
- * an InputMsg with a seq and button bits -> Match.queueInput -> Ship.applyInput.
- * The server cannot tell bots and humans apart.
- */
 export class Bot implements PlayerInput {
   #seq = 0
   readonly #rng: Rng

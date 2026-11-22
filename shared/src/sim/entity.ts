@@ -5,7 +5,6 @@ import type { AnyEntity, EntityKind } from './kinds.ts'
 import type { World } from './world.ts'
 import type { Ship } from './ship.ts'
 
-/** A behavior attached to an entity (composition instead of a deeper class tree). */
 export interface Behavior {
   readonly name: string
   update(entity: Entity, world: World, dt: number): void
@@ -18,10 +17,6 @@ export interface EntityInit {
   radius?: number
 }
 
-/**
- * Base class for everything in the world. Ids come from a private static
- * counter, so nothing outside the class can forge or reset them.
- */
 export abstract class Entity {
   static #nextId = 1
   static resetIds(n = 1): void {
@@ -36,9 +31,7 @@ export abstract class Entity {
   radius: number
   alive = true
   collidable = true
-  /** Networked player ships are moved per input by the server's Match (see Ship). */
   driven = false
-  /** Who fired / owns this entity (bullets). Homing uses it to not chase its own ship. */
   owner: Ship | null = null
   behaviors: Behavior[] = []
   prevPos: Vector2
@@ -54,7 +47,6 @@ export abstract class Entity {
     this.prevAngle = angle
   }
 
-  /** Saved at the start of each step so the renderer can lerp(prev, current, alpha). */
   remember(): void {
     this.prevPos = this.pos
     this.prevAngle = this.angle

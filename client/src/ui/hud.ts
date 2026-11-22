@@ -1,7 +1,6 @@
 import type { Bus } from '@dogfight/shared/sim/world.ts'
 import type { ClientEvents } from '../net/netgame.ts'
 
-/** Kill feed. Listens to the bus; the netcode/sim does not know it exists. */
 export function createHud(bus: Bus<ClientEvents>, nameOf: (playerId: number) => string | undefined): { lines(): string[] } {
   const feed: { text: string; t: number }[] = []
   const push = (text: string): void => {

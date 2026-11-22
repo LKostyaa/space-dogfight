@@ -10,7 +10,6 @@ export const BULLET_DAMAGE = 25
 export class Bullet extends Entity {
   readonly kind = 'bullet'
   ttl = BULLET_TTL
-  /** seq of the input that fired it — lets the client match its predicted bullet. */
   seq = 0
 
   constructor({ pos, vel, owner }: { pos: Vector2; vel: Vector2; owner: Ship }) {

@@ -22,13 +22,6 @@ export interface MatchLog {
   readonly done: Promise<void>
 }
 
-/**
- * Streams every "event" of a room into LOG_DIR/<room>-<timestamp>.ndjson.
- * events.on(...) turns the emitter into an async iterable. It is created
- * eagerly (before anything is emitted) so no event is missed, and it ends on
- * the room's "closed" / "log:end" event — after draining everything queued —
- * which ends the pipeline and flushes the file.
- */
 export async function startMatchLog(room: Room, logDir: string): Promise<MatchLog> {
   await mkdir(logDir, { recursive: true })
   const file = path.join(logDir, `${room.id}-${Date.now()}.ndjson`)

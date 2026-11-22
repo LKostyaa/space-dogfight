@@ -55,7 +55,6 @@ describe('World', () => {
       w.spawn(new Ship({ pos: v(300, 300), playerId: pid(1) }))
       return w
     }
-    // run one after the other: both worlds draw ids from the same static counter
     const run = () => {
       const w = make()
       for (let i = 0; i < 300; i++) w.step(DT, new Map([[pid(1), controls({ thrust: i % 3 !== 0, left: i % 50 < 10, fire: i % 7 === 0 })]]))

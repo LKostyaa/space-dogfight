@@ -51,18 +51,12 @@ export interface MatchPlayer {
   readonly ai: PlayerInput | null
 }
 
-/** Called once per tick with the world snapshot; the network layer encodes it once per codec. */
 export type BroadcastSnapshot = (snapshot: WorldSnapshot, players: Iterable<MatchPlayer>) => void
 
 interface Logger {
   warn(obj: object, msg?: string): void
 }
 
-/**
- * The authoritative simulation of one room. 30 Hz: apply queued inputs,
- * step the shared World, send each client a snapshot that says which of its
- * inputs has been applied (`ack`).
- */
 export class Match {
   readonly room: Room
   readonly world: World
@@ -102,7 +96,6 @@ export class Match {
     if (this.players.size === 0) this.stop()
   }
 
-  /** Inputs arrive faster or slower than ticks; keep them in order, ignore duplicates/old ones. */
   queueInput(playerId: PlayerId, { seq, bits }: InputMsg): void {
     const p = this.players.get(playerId)
     if (!p) return
@@ -113,7 +106,6 @@ export class Match {
   }
 
   step(): WorldSnapshot {
-    // 1. player ships: one physics step per received input (see Ship.update)
     for (const p of this.players.values()) {
       const botInput = p.ai?.nextInput(this.world, p.ship)
       if (botInput) this.queueInput(p.id, botInput) // bots use the same path as humans
@@ -142,7 +134,6 @@ export class Match {
     const snap = this.step()
     this.onBroadcast?.(snap, this.players.values())
     this.tickMs.push(performance.now() - start)
-    // absolute target times: errors don't accumulate the way chained setTimeout(…, 33) would
     this.#nextAt += TICK_MS
     let delay = this.#nextAt - performance.now()
     if (delay < -TICK_MS * 5) {

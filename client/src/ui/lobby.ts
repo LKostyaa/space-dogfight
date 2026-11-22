@@ -17,12 +17,6 @@ export interface LobbyEvents {
   join: { room: RoomInfo; name: string }
 }
 
-/**
- * Lobby model: knows nothing about the DOM. While visible it polls the room
- * list (every `intervalMs`; after failures with exponential backoff up to
- * `maxBackoffMs` — e.g. while the server restarts) and reports through typed
- * events. leave() aborts the in-flight request and stops polling.
- */
 export class Lobby extends Bus<LobbyEvents> {
   #controller: AbortController | null = null
   #timer = 0

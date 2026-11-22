@@ -92,4 +92,3 @@ describe('properties (fast-check)', () => {
     fc.assert(fc.property(valid, mutate, (m, f) => parseClientMessage(m).ok && !parseClientMessage(f(m)).ok), { numRuns: 300 })
   })
 })
-

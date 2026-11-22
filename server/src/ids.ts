@@ -1,9 +1,5 @@
 import { toId, type PlayerId } from '@dogfight/shared/types.ts'
 
-/**
- * Player ids are one byte on the wire (docs/protocol.md), so they are
- * recycled: 1..254 per server process, smallest free id first. 0 means "nobody".
- */
 export class PlayerIdPool {
   readonly #used = new Set<number>()
   readonly #max: number

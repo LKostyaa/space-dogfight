@@ -1,6 +1,3 @@
-// Minimal service worker: makes the game installable and the shell load offline.
-// Strategy: network-first for everything (always fresh after a deploy), cache as fallback.
-// API, health and the WebSocket are never cached.
 const CACHE = 'dogfight-v1'
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/assets/manifest.json', '/assets/sprites.svg']
 

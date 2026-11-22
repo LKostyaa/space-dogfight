@@ -17,11 +17,6 @@ import { CodecError } from './errors.ts'
 import type { Codec, Wire } from './types.ts'
 import type { WorldSnapshot } from '../net/snapshot.ts'
 
-/**
- * Binary codec with DataView, little-endian. Layout: docs/protocol.md.
- * Quantization: position u16 = x·40 (0.025 px), velocity i16 = v·16,
- * angle u16 = angle/2π·65536.
- */
 const LE = true
 const POS = 40
 const VEL = 16

@@ -9,7 +9,6 @@ async function join(browser: Browser, name: string, room = 'duel'): Promise<Page
   return page
 }
 
-/** Where page `viewer` currently sees the ship of player `name` (from its latest snapshot). */
 function shipOf(viewer: Page, name: string) {
   return viewer.evaluate((n) => {
     const g = window.__game

@@ -28,10 +28,6 @@ export interface LoadOptions {
   signal?: AbortSignal | undefined
 }
 
-/**
- * Retries `fn` with exponential backoff + full jitter. Never retries a 4xx
- * (the file is not there — asking again will not help) or an abort.
- */
 export async function withRetry<T>(fn: () => Promise<T>, { attempts = 3, baseMs = 200, signal }: { attempts?: number; baseMs?: number } & LoadOptions = {}): Promise<T> {
   let lastError: unknown
   for (let i = 0; i < attempts; i++) {
@@ -65,7 +61,6 @@ export async function fetchJson(url: string, opts: LoadOptions = {}): Promise<un
 
 export const loadJson = (url: string, opts: LoadOptions = {}): Promise<unknown> => withRetry(() => fetchJson(url, opts), opts)
 
-/** Image via fetch -> blob -> decode, so it can be aborted and status-checked like everything else. */
 export function loadImage(url: string, opts: LoadOptions = {}): Promise<HTMLImageElement> {
   return withRetry(async () => {
     const blob = await (await fetchChecked(url, opts)).blob()
@@ -100,11 +95,6 @@ export type ProgressFn = (p: { done: number; total: number; key: string }) => vo
 
 const message = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 
-/**
- * Loads everything concurrently (Promise.all) with per-item progress.
- * Optional items (`required: false`) that fail are reported and skipped, so a
- * missing sprite degrades the game (fallback vector art) instead of stopping it.
- */
 export async function loadAll(items: readonly LoadItem[], { onProgress = () => {}, signal }: { onProgress?: ProgressFn } & LoadOptions = {}): Promise<LoadResult> {
   let done = 0
   const errors: LoadError[] = []
@@ -124,7 +114,6 @@ export async function loadAll(items: readonly LoadItem[], { onProgress = () => {
   return { assets: new Map(results), errors }
 }
 
-/** Same as loadAll, but one after another — only for the timing comparison in the README. */
 export async function loadSequential(items: readonly LoadItem[], { onProgress = () => {}, signal }: { onProgress?: ProgressFn } & LoadOptions = {}): Promise<LoadResult> {
   const assets = new Map<string, unknown>()
   let done = 0

@@ -7,7 +7,6 @@ const BUTTONS = [
   { code: 'ArrowUp', label: '▲', side: 'right' },
 ] as const
 
-/** On-screen controls for phones (shown only on touch screens). Returns a cleanup function. */
 export function mountTouchControls(input: Input): () => void {
   if (!matchMedia('(pointer: coarse)').matches) return () => {}
   const root = document.createElement('div')

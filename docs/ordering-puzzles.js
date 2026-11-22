@@ -1,5 +1,3 @@
-// Five task/microtask ordering puzzles. Paste into the browser console, or open
-// the game with the console and run: (await import('/docs/ordering-puzzles.js')).runAll()
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 export const puzzles = {
@@ -21,7 +19,6 @@ export const puzzles = {
     f()
     log('end')
   },
-  // 3. a setTimeout scheduled inside .then goes to the BACK of the task queue
   timeoutInThen(log) {
     setTimeout(() => log('t0'))
     Promise.resolve().then(() => {
@@ -30,7 +27,6 @@ export const puzzles = {
     })
     Promise.resolve().then(() => log('p2'))
   },
-  // 4. requestAnimationFrame runs before the next paint — after microtasks, not "immediately"
   raf(log) {
     requestAnimationFrame(() => log('raf'))
     setTimeout(() => log('timeout'))

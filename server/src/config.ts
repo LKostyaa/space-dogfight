@@ -6,11 +6,6 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 
 const int = (def: number, min = 0, max = Number.MAX_SAFE_INTEGER) => z.coerce.number().int().min(min).max(max).default(def)
 
-/**
- * All settings come from the environment (12-factor). zod validates them at
- * startup: a typo in an env var fails fast with a clear message instead of
- * misbehaving at 3 a.m.
- */
 export const ServerConfigSchema = z.object({
   PORT: int(3000, 0, 65535),
   HOST: z.string().default('0.0.0.0'),
@@ -21,14 +16,12 @@ export const ServerConfigSchema = z.object({
   MAX_PAYLOAD: int(4096, 64),
   MSG_RATE: int(60, 1), // 30 inputs/s + chat + pings
   MSG_BURST: int(120, 1),
-  /** comma-separated, e.g. "https://dogfight.example.com". Empty = only localhost origins (dev). */
   ALLOWED_ORIGINS: z
     .string()
     .default('')
     .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean))
     .pipe(z.array(z.string().url())),
   MAX_CONNECTIONS_PER_IP: int(8, 1),
-  /** behind a reverse proxy (Render, Fly, Caddy) the client IP is in X-Forwarded-For */
   TRUST_PROXY: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 })

@@ -1,5 +1,3 @@
-// Generates the small procedural sound effects in public/assets/sfx (no binary assets in git history to explain).
-// Usage: node scripts/gen-sounds.mjs
 import { writeFileSync } from 'node:fs'
 
 const RATE = 22050

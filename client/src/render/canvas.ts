@@ -4,11 +4,6 @@ export interface View {
   dpr: number
 }
 
-/**
- * DPR-aware canvas: the backing store is CSS size × devicePixelRatio so lines
- * are crisp on retina screens; the context is scaled so we keep drawing in
- * CSS pixels.
- */
 export function setupCanvas(canvas: HTMLCanvasElement): { ctx: CanvasRenderingContext2D; view: View } {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('2D canvas is not supported')

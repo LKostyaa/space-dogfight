@@ -16,7 +16,6 @@ const MIME: Readonly<Record<string, string>> = {
   '.webmanifest': 'application/manifest+json',
 }
 
-/** Serves files from `root`. Refuses anything that resolves outside it (../../etc/passwd). */
 export async function serveStatic(url: string, res: ServerResponse, root: string): Promise<boolean> {
   let rel = decodeURIComponent(new URL(url, 'http://x').pathname)
   if (rel.endsWith('/')) rel += 'index.html'

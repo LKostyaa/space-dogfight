@@ -1,7 +1,3 @@
-/**
- * Message schemas live in @dogfight/shared/protocol.ts (single source of truth).
- * Here: only the server's WebSocket close codes (4000–4999 are free for applications).
- */
 export const Close = {
   NORMAL: 1000,
   GOING_AWAY: 1001,

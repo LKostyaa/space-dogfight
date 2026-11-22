@@ -6,7 +6,6 @@ import type { ViewEntity, ViewShip } from './view-entity.ts'
 
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t
 
-/** Interpolate angles along the shortest arc (π → -π must not spin a full turn). */
 export function lerpAngle(a: number, b: number, t: number): number {
   const d = Math.atan2(Math.sin(b - a), Math.cos(b - a))
   return a + d * t

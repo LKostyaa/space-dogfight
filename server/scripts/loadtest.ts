@@ -1,12 +1,3 @@
-/**
- * Load test: N headless WebSocket clients fly scripted paths (binary codec, 30 inputs/s,
- * shooting), 8 per room. For each N we record what the server reports in /api/stats:
- * tick-time p99 (worst room), timer jitter p99, event-loop utilization, RSS, bytes/s out.
- *
- *   MAX_ROOMS=40 node server/src/index.ts          # in one terminal
- *   node server/scripts/loadtest.ts 8,32,64,128    # in another
- *   PER_ROOM=64 FIRE_EVERY=2 node server/scripts/loadtest.ts 8,16,32,48,64   # one dense room
- */
 import { WebSocket } from 'ws'
 import { binaryCodec } from '@dogfight/shared/codec/index.ts'
 import { toId, type Seq } from '@dogfight/shared/types.ts'
@@ -15,7 +6,6 @@ import { controlsToBits } from '@dogfight/shared/protocol.ts'
 const BASE = process.env.TARGET ?? 'http://localhost:3000'
 const steps = (process.argv[2] ?? '8,32,64,128').split(',').map(Number)
 const MEASURE_S = Number(process.env.MEASURE_S ?? 10)
-/** players per room: 8 = normal rooms; 64 = one dense room (needs MAX_PLAYERS_PER_ROOM=64 on the server) */
 const PER_ROOM = Number(process.env.PER_ROOM ?? 8)
 const FIRE_EVERY = Number(process.env.FIRE_EVERY ?? 6)
 

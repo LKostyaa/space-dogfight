@@ -6,7 +6,6 @@ import type { z } from 'zod'
 
 type ByType<T extends { type: string }> = { [K in T['type']]: Extract<T, { type: K }> }
 
-/** Everything a Connection can tell you: parsed server messages plus lifecycle events. */
 export type ConnectionEvents = ByType<ServerMessage> & {
   open: Record<string, never>
   close: { code: number; reason: string }
@@ -16,18 +15,10 @@ export type ConnectionEvents = ByType<ServerMessage> & {
   snapshot: string
 }
 
-/** Client messages are inputs to the same schema the server validates with. */
 export type OutgoingJson = z.input<typeof ClientMessageSchema>
 
 const RETRYABLE = new Set([1001, 1006, 1011, 1012, 1013])
 
-/**
- * WebSocket wrapper:
- *  - parses incoming JSON with the shared zod schema and emits it by `type`
- *  - queues outgoing messages while (re)connecting
- *  - reconnects with exponential backoff + jitter, unless closed on purpose
- *    or the server said "don't come back" (4000-range codes)
- */
 export class Connection extends Bus<ConnectionEvents> {
   #ws: WebSocket | null = null
   #queue: string[] = []
@@ -101,7 +92,6 @@ export class Connection extends Bus<ConnectionEvents> {
     }
   }
 
-  /** Raw frame (codec output). Inputs are not worth queueing while disconnected. */
   send(data: Wire): void {
     if (this.#ws?.readyState === WebSocket.OPEN) this.#ws.send(data)
     else if (typeof data === 'string') this.#queue.push(data)

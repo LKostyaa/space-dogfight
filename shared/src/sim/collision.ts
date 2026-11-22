@@ -2,7 +2,6 @@ import type { AnyEntity } from './kinds.ts'
 import type { World } from './world.ts'
 
 export type Pair = readonly [AnyEntity, AnyEntity]
-/** A broad phase: given entities, yield the pairs that overlap. Swappable (naive now, spatial hash in Lab 7). */
 export type FindPairs = (entities: readonly AnyEntity[]) => Iterable<Pair>
 
 interface Circle {

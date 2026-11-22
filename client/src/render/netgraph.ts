@@ -2,7 +2,6 @@ import type { View } from './canvas.ts'
 import type { NetGame } from '../net/netgame.ts'
 import type { LagSettings } from '../net/latency.ts'
 
-/** Netgraph overlay: the numbers that explain how the netcode feels. Toggle with N. */
 export function drawNetgraph(ctx: CanvasRenderingContext2D, view: View, game: NetGame, lag: LagSettings, codecName: string): void {
   const s = game.stats
   const lines = [

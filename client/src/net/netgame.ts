@@ -16,8 +16,6 @@ import { measure } from '../perf.ts'
 
 const TICK_MS = 1000 / TICK_RATE
 const SMOOTH_MS = 100
-// Lab 7: was 40 (1.3 s). Decoded snapshots lived long enough to be promoted to the old generation
-// and caused major GCs; interpolation needs ~4. 12 = 400 ms covers interpDelay up to ~300 ms.
 const BUFFER = 12
 
 /** Events the client's audio/HUD listen to: exactly the snapshot events. */
@@ -36,10 +34,6 @@ const lerpWrap = (a: number, b: number, t: number, size: number): number => {
 }
 const lerpAngle = (a: number, b: number, t: number): number => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t
 
-/**
- * Lab 5 M2 experiment (?breakdet=1): what happens if integrate() is not deterministic,
- * e.g. someone adds Math.random() to it. Client and server physics no longer agree.
- */
 const nondeterministicStep: StepFn = (state, controls, dt) => {
   const n = stepShipState(state, controls, dt)
   return { ...n, pos: n.pos.add(n.vel.scale(dt * (Math.random() - 0.5) * 0.3)) }
@@ -86,12 +80,6 @@ export interface NetGameOptions {
   breakDeterminism?: boolean
 }
 
-/**
- * Client side of the netcode:
- *  - my ship: predicted locally with the shared stepShipState, reconciled on every snapshot
- *  - everything else: rendered `interpDelay` ms in the past, interpolated between snapshots
- *  - my bullets: predicted (spawned at once), hidden when the server's copy takes over
- */
 export class NetGame {
   readonly conn: Connection
   readonly codec: Codec
@@ -111,7 +99,6 @@ export class NetGame {
   cooldown = 0
   bullets: PredictedBullet[] = []
   effects: ViewExplosion[] = []
-  /** Lab 7: view objects are reused frame to frame instead of allocated (see README, profiling). */
   readonly #views = new Map<EntityId, ViewEntity>()
   readonly #touched = new Set<EntityId>()
   readonly #out: ViewEntity[] = []
@@ -172,7 +159,6 @@ export class NetGame {
     this.lastTick = snap.tick
     const now = performance.now()
 
-    // clock: arrival time minus server time. The smallest sample is the least delayed one.
     const sample = now - snap.tick * TICK_MS
     if (this.clockOffset === null || sample < this.clockOffset) this.clockOffset = sample
     else this.clockOffset += (sample - this.clockOffset) * 0.002 // follow slow drift upwards
@@ -229,7 +215,6 @@ export class NetGame {
     }
   }
 
-  /** Explosions come from a pool; particles are plain numbers updated in place. */
   #explosion(x: number, y: number, color: string): void {
     const pos = point(x, y)
     const fx: ViewExplosion = this.#explosionPool.pop() ?? {
@@ -258,7 +243,6 @@ export class NetGame {
     this.effects.push(fx)
   }
 
-  /** One client simulation step (30 Hz): send the input, predict my ship and bullets. */
   step(controls: Controls): void {
     if (!this.myId) return
     this.seq++
@@ -298,11 +282,6 @@ export class NetGame {
     this.stats.pending = this.pending.length
   }
 
-  /**
-   * Called every render frame. Returns drawable view objects.
-   * Allocation-free in steady state: view objects live in #views (one per entity id),
-   * the output array is reused, positions are written into existing points.
-   */
   view(alpha: number, dtFrame: number): readonly ViewEntity[] {
     const now = performance.now()
     // decay the correction offset smoothly over ~SMOOTH_MS
@@ -398,7 +377,6 @@ export class NetGame {
     v.thrust = (e.flags & ShipFlag.THRUST) !== 0
   }
 
-  /** Interpolated view of one snapshot entity, reusing the object from the previous frame. */
   #viewFor(ea: EntitySnap, s: EntitySnap, t: number): ViewEntity {
     let v = this.#views.get(ea.id)
     if (!v || v.kind !== s.kind) {

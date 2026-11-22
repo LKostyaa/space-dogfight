@@ -4,10 +4,6 @@ import type { AnyEntity } from './kinds.ts'
 import type { World } from './world.ts'
 import type { Ship } from './ship.ts'
 
-/**
- * Stationary, collidable, but not a ship. The effect is data, not a subclass:
- * adding a new pickup type is one entry in EFFECTS.
- */
 export const EFFECTS = {
   shield: (ship: Ship) => (ship.shield = 6),
   rapid: (ship: Ship) => (ship.rapidFire = 6),

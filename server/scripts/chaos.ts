@@ -1,12 +1,3 @@
-/**
- * Chaos tests against a running server (node server/src/index.ts):
- *   1. a client vanishes mid-match (TCP reset, no close frame) -> the server cleans it up
- *   2. a client floods garbage frames at ~1000/s -> closed, logged, counted; the tick time
- *      of OTHER rooms does not move (proved with /api/stats)
- *
- *   node server/scripts/chaos.ts
- * (the third chaos test — killing the server mid-match — is a browser test: README, Lab 8)
- */
 import { WebSocket } from 'ws'
 import { binaryCodec } from '@dogfight/shared/codec/index.ts'
 import { toId, type Seq } from '@dogfight/shared/types.ts'

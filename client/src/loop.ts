@@ -1,20 +1,3 @@
-/**
- * Fixed-timestep game loop on top of requestAnimationFrame.
- *
- * The browser calls `frame` once per display refresh. We add the real elapsed
- * time to an accumulator and run `simulate(step)` as many times as fits, so the
- * simulation always advances in equal slices regardless of the monitor
- * (60 Hz, 144 Hz) or a slow frame. The remainder becomes `alpha` (0..1) which
- * the renderer uses to interpolate between the previous and current state.
- *
- * The elapsed time is clamped (MAX_FRAME) — after a long pause (background tab,
- * debugger) we would otherwise try to run hundreds of steps at once: the
- * "spiral of death".
- *
- * Options used only by the Lab 1 experiments (see README):
- *   scheduler: 'raf' | 'interval'  — setInterval(frame, 16) instead of rAF
- *   fixed: false                   — variable timestep: simulate(dt) once per frame
- */
 const MAX_FRAME = 0.25
 
 export interface LoopStats {
@@ -28,7 +11,6 @@ export interface LoopStats {
 
 export const FRAME_SAMPLES = 3000
 
-/** Frame times recorded so far, oldest first (for percentiles in tests / the profiling script). */
 export function frameTimesOf(stats: LoopStats): number[] {
   const n = Math.min(stats.frameCount, FRAME_SAMPLES)
   const out: number[] = []

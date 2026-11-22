@@ -10,11 +10,6 @@ export interface Audio {
   listen(bus: Bus<ClientEvents>, myPlayerId: () => number): void
 }
 
-/**
- * Owns the AudioContext. Browsers start it "suspended" until a user gesture,
- * so we resume it on the first click/key. Buffers are decoded during loading.
- * The simulation never imports this module — it only listens to bus events.
- */
 export function createAudio(): Audio {
   const ctx = new AudioContext()
   const buffers = new Map<SoundName, AudioBuffer>()

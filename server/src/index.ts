@@ -18,7 +18,6 @@ import { Bot } from './bot.ts'
 import { playerIds } from './ids.ts'
 import { createCounters, createMetrics } from './metrics.ts'
 
-// ---- crash on unknowns: log the stack and exit non-zero; the supervisor restarts a clean process ----
 process.on('uncaughtException', (err) => {
   logger.fatal({ err }, 'process.uncaught_exception')
   process.exit(1)
@@ -44,7 +43,6 @@ class HttpError extends Error {
   }
 }
 
-// every room gets an authoritative Match (registered before the WebSocket layer wires the room)
 rooms.on('created', (room) => {
   room.match = new Match(room, { ...ARENAS[room.arena], log: logger.child({ roomId: room.id }) })
   room.once('closed', () => room.match?.stop())
@@ -159,7 +157,6 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return pipeline(createReadStream(file), res)
   }
   if (route === 'GET /api/slow' && process.env.NODE_ENV !== 'production') {
-    // Deliberately blocks the event loop for 300 ms (README, Lab 4). Disabled in production.
     const until = performance.now() + 300
     while (performance.now() < until) {
       /* busy */
@@ -179,7 +176,6 @@ const server = http.createServer((req, res) => {
     if (!(e instanceof HttpError)) logger.error({ err: e, url: req.url }, 'http.error')
   })
 })
-// keep-alive longer than typical proxy idle timeouts (60 s), so the proxy closes first
 server.keepAliveTimeout = 65_000
 server.headersTimeout = 66_000
 
@@ -194,11 +190,6 @@ server.listen(config.port, config.host, () => {
   logger.info({ host: config.host, port: config.port, origins: config.allowedOrigins }, 'server.listening')
 })
 
-/**
- * SIGTERM (docker stop, a deploy, autoscaling): stop accepting, tell clients to
- * reconnect (shutdown + close 1001), flush match logs, exit 0 — well within the
- * supervisor's 10 s grace period. A hard deadline makes sure we never hang.
- */
 async function shutdown(signal: string): Promise<void> {
   if (stopping) return
   stopping = true

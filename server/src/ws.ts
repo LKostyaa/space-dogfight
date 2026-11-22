@@ -17,7 +17,6 @@ const JOIN_TIMEOUT_MS = 5000
 const HEARTBEAT_MS = 15000
 const SLOW_CLIENT_BYTES = 256 * 1024
 
-/** Per-connection state (instead of monkey-patching fields onto the socket). */
 interface Conn {
   readonly ws: WebSocket
   readonly ip: string
@@ -28,11 +27,9 @@ interface Conn {
   room: Room | null
   codec: CodecName
   log: Logger
-  /** set once we decided to close: frames already in flight are ignored (and not counted twice) */
   closing: boolean
 }
 
-/** RawData can be a Buffer, ArrayBuffer or Buffer[] — normalize to an ArrayBuffer for the codec. */
 function toArrayBuffer(data: RawData): ArrayBuffer {
   if (data instanceof ArrayBuffer) return data
   const buf = Array.isArray(data) ? Buffer.concat(data) : data
@@ -47,18 +44,12 @@ export function clientIp(req: Pick<IncomingMessage, 'headers' | 'socket'>, trust
   return req.socket.remoteAddress ?? '?'
 }
 
-/** Browsers always send Origin on a WebSocket handshake; CORS does not apply to WebSockets, so we check it ourselves. */
 export function originAllowed(origin: string | undefined, allowed: readonly string[]): boolean {
   if (!origin) return true // not a browser (load test, curl): Origin can't stop scripts anyway — rate/IP limits do
   if (allowed.length === 0) return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) // dev default
   return allowed.includes(origin)
 }
 
-/**
- * WebSocket connection lifecycle:
- *   handshake (Origin + per-IP cap) -> must send `join` within 5 s -> in a room (match) -> close.
- * Every message is validated; bad ones close the socket with a code, are logged and counted.
- */
 export function attachWebSocket(server: HttpServer, { rooms, config, log, counters }: { rooms: RoomManager; config: ServerConfig; log: Logger; counters: NetCounters }) {
   const perIp = new Map<string, number>()
 
@@ -100,7 +91,6 @@ export function attachWebSocket(server: HttpServer, { rooms, config, log, counte
     c.ws.close(code, (detail || reason).slice(0, 120))
   }
 
-  /** Sends unless the client can't keep up. Non-critical messages are dropped for slow clients. */
   function send(ws: WebSocket, data: string | ArrayBuffer, { critical = true } = {}): void {
     if (ws.readyState !== ws.OPEN) return
     if (ws.bufferedAmount > SLOW_CLIENT_BYTES) {

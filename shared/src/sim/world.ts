@@ -10,7 +10,6 @@ import { isKind, type AnyEntity, type EntityKind, type EntityOfKind } from './ki
 import type { Controls } from './ship.ts'
 import type { EntityId, PlayerId } from '../types.ts'
 
-/** Game events. The sim dispatches them; audio, HUD and the network layer subscribe. */
 export interface GameEvents {
   fired: { playerId: PlayerId; x: number; y: number }
   hit: { kind: 'ship'; playerId: PlayerId; x: number; y: number }
@@ -46,12 +45,10 @@ export class World {
   readonly findPairs: FindPairs
   readonly bus = new Bus<GameEvents>()
   time = 0
-  /** the same events, collected per step, so the server can put them into snapshots */
   stepEvents: GameEvent[] = []
   targets = { asteroids: 0, pickups: 0 }
   maintenanceIn = 0
 
-  // Lab 7: spatial hash by default (naivePairs is still available and used in tests as the reference)
   constructor({ seed = 1, findPairs = spatialHashPairs() }: { seed?: number; findPairs?: FindPairs } = {}) {
     this.rng = createRng(seed)
     this.findPairs = findPairs
@@ -108,7 +105,6 @@ export class World {
     if (this.maintenanceIn <= 0) this.maintain()
   }
 
-  /** Every few seconds: top up rocks and power-ups so a long match never runs empty. */
   maintain(): void {
     this.maintenanceIn = 5
     let rocks = 0

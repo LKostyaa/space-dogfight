@@ -43,7 +43,6 @@ export interface RoomInit {
   persistent?: boolean
 }
 
-/** A room: players + events. The generic "event" ({ t, type, ... }) feeds the match log. */
 export class Room extends EventEmitter<RoomEvents> {
   readonly id: string
   readonly name: string

@@ -8,11 +8,6 @@ import type { AnyEntity } from './kinds.ts'
 import type { World } from './world.ts'
 import type { PlayerId, Seq } from '../types.ts'
 
-// Tuning (see README "Налаштування керування"):
-// TURN 3.4 rad/s  — a full turn in ~1.85 s, easy to aim, not a spinning top.
-// THRUST 480      — noticeable acceleration in half a second.
-// DRAG 0.9        — the ship drifts (space!) but stops within ~3 s.
-// MAX_SPEED 360   — still readable at 60 Hz.
 export const TURN = 3.4
 export const THRUST = 480
 export const DRAG = 0.9
@@ -49,10 +44,6 @@ export function integrate(ship: ShipState, controls: Controls, dt: number): Ship
   return { angle, vel, pos: ship.pos.add(vel.scale(dt)) }
 }
 
-/**
- * integrate + wrap-around. The server (Ship.applyInput) and the client's prediction
- * call exactly this function, so with the same inputs they get the same result.
- */
 export function stepShipState(state: ShipState, controls: Controls, dt: number): ShipState {
   const next = integrate(state, controls, dt)
   return { ...next, pos: wrapPos(next.pos) }
@@ -101,13 +92,9 @@ export class Ship extends Entity {
       if (this.respawnIn <= 0) this.respawn(world)
       return
     }
-    // A networked player's ship moves once per *input* (Match calls applyInput),
-    // not once per world tick — otherwise the server would move it on ticks
-    // where no input arrived, and client prediction could never match.
     if (!this.driven) this.applyInput(this.controls, dt, world)
   }
 
-  /** One step of this ship driven by one input: rotation/thrust, timers, firing. */
   applyInput(controls: Controls, dt: number, world: World): void {
     if (this.dead) return
     this.controls = controls
@@ -124,7 +111,6 @@ export class Ship extends Entity {
     if (controls.fire && this.cooldown === 0) this.fire(world)
   }
 
-  /** Spawns a bullet from the nose with the ship's velocity added ("inherited"). */
   fire(world: World): void {
     const nose = this.pos.add(Vector2.fromAngle(this.angle, this.radius + 4))
     const bullet = new Bullet({ pos: nose, vel: this.vel.add(Vector2.fromAngle(this.angle, BULLET_SPEED)), owner: this })

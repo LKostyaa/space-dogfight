@@ -1,6 +1,5 @@
 import type { Connection } from '../net/connection.ts'
 
-/** Chat box + roster notices. Talks to the Connection only through events and send(). */
 export function mountChat(root: HTMLElement, conn: Connection): { add(text: string, cls?: string): void; destroy(): void } {
   root.className = 'chat'
   const log = document.createElement('ul')

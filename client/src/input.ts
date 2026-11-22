@@ -1,13 +1,5 @@
 import type { Controls } from '@dogfight/shared/sim/ship.ts'
 
-/**
- * Keyboard state hidden in a closure. Nothing outside can touch `down` or
- * `pressed` — only the returned functions can, because they close over them.
- *
- * justPressed(code) is edge-triggered: true from the keydown until the next
- * `endStep()` (called once at the end of every simulation step), so a single
- * press fires a single bullet even though the OS sends auto-repeat keydowns.
- */
 const BLOCK = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'])
 
 export interface Input {

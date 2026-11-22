@@ -1,16 +1,10 @@
 import type { Effect } from '@dogfight/shared/sim/pickup.ts'
 
-/** Mutable 2D point. View objects are reused frame to frame (Lab 7: no per-frame allocations). */
 export interface Point {
   x: number
   y: number
 }
 
-/**
- * What the renderer draws. Built by NetGame from snapshots (interpolated) or
- * from local prediction — the renderer does not care which. These objects are
- * pooled and mutated in place every frame, so the render loop allocates nothing.
- */
 interface ViewBase {
   pos: Point
   prevPos: Point
@@ -57,7 +51,6 @@ export interface ViewExplosion extends ViewBase {
 
 export type ViewEntity = ViewShip | ViewBullet | ViewAsteroid | ViewPickup | ViewExplosion
 
-/** A point whose prevPos IS pos: interpolation already happened in NetGame. */
 export function point(x = 0, y = 0): Point {
   return { x, y }
 }

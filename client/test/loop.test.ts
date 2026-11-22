@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createLoop, frameTimesOf } from '../src/loop.ts'
 
-/** Fake frames: we decide when the "display" refreshes and what timestamp it reports. */
 function fakeFrames() {
   let cb: FrameRequestCallback | null = null
   return {

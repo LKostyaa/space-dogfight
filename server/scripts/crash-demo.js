@@ -1,6 +1,3 @@
-// Shows why an "error" event without a listener (or an unhandled rejection) kills the whole process.
-// node server/scripts/crash-demo.js crash   -> process dies
-// node server/scripts/crash-demo.js fixed   -> error is logged, process keeps serving
 import { EventEmitter } from 'node:events'
 
 const mode = process.argv[2] ?? 'crash'

@@ -6,7 +6,6 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
   return node
 }
 
-/** DOM rendering of the Lobby model. Only listens to its events and calls lobby.join(). */
 export function mountLobbyView(root: HTMLElement, lobby: Lobby, { warnings = [], notice = '', name = '' }: { warnings?: readonly string[]; notice?: string; name?: string } = {}): void {
   const nameEl = el('input', { id: 'pilot', maxLength: 16, value: name || `pilot-${Math.floor(Math.random() * 900 + 100)}` })
   const noticeEl = el('p', { id: 'lobby-notice', className: 'notice', textContent: notice, hidden: !notice })

@@ -1,4 +1,3 @@
-// What the e2e test reads from the page (exposed by client/src/main.ts for debugging/tests).
 export {}
 interface SnapEntity {
   kind: string

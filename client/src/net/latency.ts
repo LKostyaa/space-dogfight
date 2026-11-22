@@ -9,14 +9,6 @@ export interface Lagger {
   delay(fn: () => void): void
 }
 
-/**
- * Latency / jitter / packet-drop injector for testing netcode on localhost.
- * Every message in both directions goes through `delay(fn)`.
- * Settings are live-editable (netgraph keys) and start from the URL:
- *   ?lag=100&jitter=30&drop=2   (ms one way, ± ms, percent)
- * Note: with jitter, messages can arrive out of order — just like UDP. The
- * game handles that (old snapshots and old input seqs are ignored).
- */
 export function createLagger({ lag = 0, jitter = 0, drop = 0 }: Partial<LagSettings> = {}): Lagger {
   const settings: LagSettings = { lag, jitter, drop }
   return {

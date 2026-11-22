@@ -21,9 +21,6 @@ import { mountChat } from './ui/chat.ts'
 import { mountTouchControls } from './ui/touch.ts'
 import { measure, perfReport, resetPerf } from './perf.ts'
 
-// URL flags:
-//   loading tests (Lab 3): ?missing=1 ?slow=ms ?abort=ms ?badjson=1 ?sequential=1
-//   netcode (Lab 5): ?codec=json|binary ?lag=ms ?jitter=ms ?drop=% ?interp=ms ?netgraph=0 ?predict=0 ?breakdet=1
 const params = new URLSearchParams(location.search)
 const num = (key: string, def: number): number => Number(params.get(key) ?? def)
 const slow = params.get('slow')
@@ -87,7 +84,6 @@ async function loadAssets(): Promise<LoadResult & { manifest: Manifest }> {
 let serverVersion = '?'
 const HealthSchema = z.object({ version: z.string() })
 
-/** Starts a match; returns when the connection is lost via `onLeave(reason)`. */
 function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, room: RoomInfo, name: string, onLeave: (notice: string) => void): void {
   for (const s of SOUNDS) {
     const buf = assets.get(`sfx:${s}`)
@@ -133,7 +129,6 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
   const IDLE = { left: false, right: false, thrust: false, fire: false }
   let lastRender = performance.now()
   const loop = createLoop({
-    // the client simulates at the server's tick rate (30 Hz); rendering interpolates at display rate
     step: DT,
     simulate() {
       measure('simulate', () => game.step(document.activeElement instanceof HTMLInputElement ? IDLE : readControls(input)))
@@ -160,8 +155,6 @@ function startGame({ assets, manifest }: LoadResult & { manifest: Manifest }, ro
   loop.start()
   Object.assign(window, { __loop: loop, __game: game, __conn: conn, __lagger: lagger, __perf: { report: perfReport, reset: resetPerf } })
 
-  // Server restarted (shutdown + 1001), network dropped (1006) or we were kicked (4xxx):
-  // stop the match and go back to the lobby with a clear message. The lobby retries with backoff.
   let left = false
   const leave = (notice: string): void => {
     if (left) return
@@ -206,7 +199,6 @@ async function boot(): Promise<void> {
   Object.assign(window, { __lobby: lobby })
 }
 
-// PWA: installable + offline shell. Not on localhost, so dev reloads are never served from a stale cache.
 if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
   navigator.serviceWorker.register('/sw.js').catch((e: unknown) => console.warn('service worker', e))
 }

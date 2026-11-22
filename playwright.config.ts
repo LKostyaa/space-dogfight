@@ -6,7 +6,6 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   use: {
     baseURL: 'http://localhost:3100',
-    // local runs can point at an installed Chrome; CI uses `npx playwright install chromium`
     launchOptions: process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME } : {},
   },
   webServer: {

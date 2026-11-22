@@ -1,9 +1,3 @@
-/**
- * Lab 7 instrumentation. With ?perf=1 every hot function is wrapped in
- * performance.mark/measure, so it shows up as named spans in the DevTools
- * Performance panel ("Timings") and its durations are collected here.
- * Without the flag `measure` is a plain call — no extra allocations in normal play.
- */
 const ENABLED = new URLSearchParams(location.search).has('perf')
 const durations = new Map<string, number[]>()
 let calls = 0
@@ -20,7 +14,6 @@ export function measure<T>(name: string, fn: () => T): T {
     if (!list) durations.set(name, (list = []))
     list.push(m.duration)
     if (list.length > 4000) list.shift()
-    // the performance timeline is a buffer too — don't let it grow forever
     if (++calls % 500 === 0) {
       performance.clearMarks()
       performance.clearMeasures()
@@ -33,7 +26,6 @@ const pct = (a: readonly number[], p: number): number => {
   return s[Math.min(s.length - 1, Math.floor(p * s.length))] ?? 0
 }
 
-/** Summary for the README tables (read from the console or by the profiling script). */
 export function perfReport(): Record<string, { n: number; p50: number; p99: number; totalMs: number }> {
   const out: Record<string, { n: number; p50: number; p99: number; totalMs: number }> = {}
   for (const [name, list] of durations) out[name] = { n: list.length, p50: pct(list, 0.5), p99: pct(list, 0.99), totalMs: list.reduce((a, b) => a + b, 0) }

@@ -1,12 +1,3 @@
-/**
- * Protocol v1 — the single source of truth for every message.
- * zod schema -> inferred TypeScript type -> runtime parsing at every boundary.
- *
- * JSON control messages: join, chat, ping, leave, input (JSON codec only) and
- * welcome, roster, chat, pong, shutdown, snapshot (JSON codec only).
- * Hot-path messages (input, snapshot) go through a Codec — see codec/.
- * Binary layout: docs/protocol.md.
- */
 import { z } from 'zod'
 import { toId, ok, err, type EntityId, type PlayerId, type Seq, type Tick, type Result } from './types.ts'
 import { EFFECT_NAMES, type Effect } from './sim/pickup.ts'
@@ -43,7 +34,6 @@ export const ClientMessageSchema = z.discriminatedUnion('type', [
 ])
 export type ClientMessage = z.infer<typeof ClientMessageSchema>
 
-/** Parses untrusted data. Never throws: bad input is a value, the caller decides (log + close). */
 export function parseClientMessage(data: unknown): Result<ClientMessage> {
   let raw: unknown = data
   if (typeof data === 'string') {
@@ -152,7 +142,6 @@ export function parseServerMessage(data: unknown): Result<ServerMessage> {
   return r.success ? ok(r.data) : err(r.error.issues[0]?.message ?? 'invalid')
 }
 
-/** Server-side constructor for JSON messages: the type checker verifies the shape. */
 export function encodeServerMessage(msg: z.input<typeof ServerMessageSchema>): string {
   return JSON.stringify(msg)
 }

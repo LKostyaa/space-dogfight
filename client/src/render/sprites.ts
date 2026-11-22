@@ -7,11 +7,9 @@ export interface SheetInfo {
 
 export interface Sprites {
   readonly ok: boolean
-  /** Returns false when the sheet failed to load, so the caller falls back to vector art. */
   draw(ctx: CanvasRenderingContext2D, frame: SpriteFrame, x: number, y: number, angle: number, size: number): boolean
 }
 
-/** Draws a frame from the sprite sheet with drawImage(source rect -> dest rect). */
 export function createSprites(image: HTMLImageElement | null, sheet: SheetInfo): Sprites {
   return {
     ok: image !== null,

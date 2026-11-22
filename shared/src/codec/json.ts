@@ -16,7 +16,6 @@ function parse(data: Wire): unknown {
   }
 }
 
-/** Plain JSON codec — kept behind a flag for the JSON-vs-binary comparison. */
 export const jsonCodec: Codec = {
   name: 'json',
   encodeSnapshot(snap: Snapshot): string {

@@ -11,7 +11,6 @@ export type RejectReason =
   | 'server_full'
   | 'too_slow'
 
-/** Counters the network layer increments. Read by /metrics and /api/stats. */
 export interface NetCounters {
   bytesOut: number
   bytesIn: number
@@ -29,12 +28,6 @@ export function reject(c: NetCounters, reason: RejectReason): void {
   c.rejected.set(reason, (c.rejected.get(reason) ?? 0) + 1)
 }
 
-/**
- * Prometheus text format (https://prometheus.io/docs/instrumenting/exposition_formats/),
- * written by hand — a dozen lines instead of a dependency. Counters end in _total
- * (graph them with rate()); for a quick look without Prometheus there are also
- * per-second gauges computed over the interval since the previous scrape.
- */
 export function createMetrics(counters: NetCounters, rooms: RoomManager) {
   let lastElu = performance.eventLoopUtilization()
   let last = { t: performance.now(), msgIn: 0, msgOut: 0, bytesIn: 0, bytesOut: 0 }

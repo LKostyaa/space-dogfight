@@ -3,10 +3,6 @@ export interface TokenBucket {
   readonly tokens: number
 }
 
-/**
- * Token bucket: `rate` tokens per second, at most `burst` saved up.
- * take() returns false when the client is over the limit.
- */
 export function createTokenBucket({ rate, burst, now = () => performance.now() }: { rate: number; burst: number; now?: () => number }): TokenBucket {
   let tokens = burst
   let last = now()

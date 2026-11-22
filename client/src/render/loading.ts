@@ -8,7 +8,6 @@ export interface LoadingState {
   fatal?: unknown
 }
 
-/** Loading screen drawn on the canvas: real progress bar + list of problems. */
 export function drawLoading(ctx: CanvasRenderingContext2D, view: View, { done, total, errors = [], fatal = null }: LoadingState): void {
   ctx.fillStyle = '#05070d'
   ctx.fillRect(0, 0, view.width, view.height)

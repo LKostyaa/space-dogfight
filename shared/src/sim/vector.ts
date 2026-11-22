@@ -1,4 +1,3 @@
-/** Immutable 2D vector: every method returns a new Vector2, `a.add(b)` never changes `a`. */
 export class Vector2 {
   readonly x: number
   readonly y: number

@@ -8,7 +8,6 @@ export interface Particle {
   vel: Vector2
 }
 
-/** Short-lived particles. Many small objects -> see Lab 7 (GC, pooling). */
 export class Explosion extends Entity {
   readonly kind = 'explosion'
   color: string

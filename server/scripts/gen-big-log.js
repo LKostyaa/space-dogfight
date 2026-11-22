@@ -1,5 +1,3 @@
-// Writes a synthetic match log of ~SIZE_MB megabytes (default 200) for the backpressure test.
-// Usage: node server/scripts/gen-big-log.js [sizeMB] [logDir]
 import { createWriteStream } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import { once } from 'node:events'

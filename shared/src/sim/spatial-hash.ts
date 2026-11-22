@@ -1,12 +1,6 @@
 import { circlesOverlap, type Pair } from './collision.ts'
 import type { AnyEntity } from './kinds.ts'
 
-/**
- * Broad phase with a uniform grid: each entity is put into every cell its
- * bounding box touches; only entities sharing a cell are tested. With bullets
- * everywhere this is ~O(n) instead of O(n²). Drop-in replacement for naivePairs
- * (same signature, same pairs — a property test checks that).
- */
 export function spatialHashPairs(cellSize = 64) {
   return function* (entities: readonly AnyEntity[]): Generator<Pair> {
     const cells = new Map<number, AnyEntity[]>()

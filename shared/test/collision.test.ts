@@ -26,8 +26,6 @@ describe('collisions', () => {
   })
 
   it('a fast bullet tunnels through a thin target between two steps (known limitation)', () => {
-    // 620 px/s * 1/30 s = ~21 px per step; a radius-3 bullet can skip a radius-3 target.
-    // Documented in the README; not worth swept collision at our speeds and sizes.
     const w = new World({ seed: 1 })
     const owner = w.spawn(new Ship({ pos: v(900, 800), playerId: pid(1) }))
     const thin = w.spawn(new Asteroid({ pos: v(110, 100), vel: v(0, 0), radius: 3, spin: 0 }))
