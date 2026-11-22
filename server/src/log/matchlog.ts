@@ -36,8 +36,8 @@ export async function startMatchLog(room: Room, logDir: string): Promise<MatchLo
   const source = Readable.from(
     (async function* () {
       for await (const args of events) {
-        const [event]: unknown[] = args
-        yield event
+        const list: unknown = args // events.on yields the listener's arguments as an array
+        if (Array.isArray(list)) yield list[0]
       }
     })(),
   )

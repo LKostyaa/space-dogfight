@@ -20,17 +20,22 @@ export interface GameEvents {
 export type GameEventType = keyof GameEvents
 export type GameEvent = { [K in GameEventType]: { type: K } & GameEvents[K] }[GameEventType]
 
-/** EventTarget with typed event names and details. */
-export class Bus<E extends object> extends EventTarget {
+/**
+ * Typed event bus: event names and their details come from the map `E`.
+ * (Lab 3 used a plain EventTarget + CustomEvent; its `detail` is `any`, which
+ * typescript-eslint rightly flagged — this keeps the same API, fully typed.)
+ */
+export class Bus<E extends object> {
+  readonly #listeners: { [K in keyof E]?: Set<(detail: E[K]) => void> } = {}
+
   emit<K extends keyof E & string>(type: K, detail: E[K]): void {
-    this.dispatchEvent(new CustomEvent(type, { detail }))
+    for (const fn of this.#listeners[type] ?? []) fn(detail)
   }
+
   on<K extends keyof E & string>(type: K, fn: (detail: E[K]) => void): () => void {
-    const listener = (e: Event): void => {
-      if (e instanceof CustomEvent) fn(e.detail)
-    }
-    this.addEventListener(type, listener)
-    return () => this.removeEventListener(type, listener)
+    const set = (this.#listeners[type] ??= new Set())
+    set.add(fn)
+    return () => set.delete(fn)
   }
 }
 

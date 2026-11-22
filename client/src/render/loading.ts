@@ -25,7 +25,7 @@ export function drawLoading(ctx: CanvasRenderingContext2D, view: View, { done, t
   ctx.fillRect(x + 2, y + 2, ((w - 4) * done) / Math.max(1, total), 10)
   ctx.font = '12px ui-monospace, monospace'
   ctx.fillStyle = '#ffb3b3'
-  const lines = fatal ? [fatal instanceof Error ? fatal.message : String(fatal)] : errors.map((e) => `${e.key}: ${e.message} (fallback used)`)
+  const lines = fatal ? [fatal instanceof Error ? fatal.message : typeof fatal === 'string' ? fatal : 'unknown error'] : errors.map((e) => `${e.key}: ${e.message} (fallback used)`)
   lines.forEach((l, i) => ctx.fillText(l, view.width / 2, y + 44 + i * 16))
   ctx.textAlign = 'left'
 }
